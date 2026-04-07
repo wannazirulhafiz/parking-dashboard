@@ -191,6 +191,45 @@ footer{border-top:1.5px solid var(--ink);padding:24px 0;margin-top:80px}
   .header-meta{align-items:flex-start}
 }
 @media(max-width:600px){.page{padding:0 16px}.stats-grid{grid-template-columns:repeat(2,1fr)}h1{font-size:18px}}
+
+@media(max-width:480px){
+  /* Tables — scrollable on phone */
+  .result-table,.exp-table,.mini-table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap}
+  /* Flow steps — stack vertically */
+  .flow-row{flex-direction:column}
+  .flow-step{border-right:none;border-bottom:1px solid var(--line);width:100%}
+  .flow-step:last-child{border-bottom:none}
+  /* Stats grid — 1 column */
+  .stats-grid{grid-template-columns:1fr 1fr}
+  /* Bar chart labels */
+  .bar-label{width:60px;font-size:9px}
+  /* Reduce padding */
+  .card{padding:14px}
+  .stat-box{padding:14px}
+  /* Formula */
+  .formula{font-size:11px;padding:10px 12px}
+  /* Hash chain blocks smaller */
+  .hash-block{min-width:110px;padding:8px 10px}
+  /* Section spacing */
+  section{margin-bottom:48px}
+  /* Header */
+  .thesis-label{font-size:9px}
+  h2{font-size:16px}
+  /* Nav font smaller */
+  .nav-inner a{font-size:10px;padding:12px 10px}
+  /* Code blocks */
+  .code-block{font-size:11px;padding:14px 16px}
+  /* Demo view fixes */
+  .dm-stat-row{grid-template-columns:repeat(2,1fr)}
+  .dm-main{grid-template-columns:1fr}
+  .dm-layer-bar{grid-template-columns:1fr}
+  .dm-body{padding:8px 10px}
+  .dm-stat{padding:10px 12px}
+  .dm-stat-val{font-size:20px}
+  .attack-buttons{grid-template-columns:1fr !important}
+  .exp-tab-wrap{gap:4px !important}
+  .exp-tab{padding:4px 8px !important;font-size:10px !important}
+}
 </style>
 </head>
 <body>
