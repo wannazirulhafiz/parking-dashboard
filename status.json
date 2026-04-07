@@ -1,0 +1,41 @@
+{
+  "last_updated": "2026-04-07T08:00:00",
+  "device_id": "jetson-nano-parking",
+  "parking_slots": [
+    {"id": 1, "occupied": true},
+    {"id": 2, "occupied": false},
+    {"id": 3, "occupied": true},
+    {"id": 4, "occupied": true},
+    {"id": 5, "occupied": false},
+    {"id": 6, "occupied": false},
+    {"id": 7, "occupied": true},
+    {"id": 8, "occupied": false},
+    {"id": 9, "occupied": true},
+    {"id": 10, "occupied": true},
+    {"id": 11, "occupied": false},
+    {"id": 12, "occupied": true},
+    {"id": 13, "occupied": false},
+    {"id": 14, "occupied": true},
+    {"id": 15, "occupied": false}
+  ],
+  "blockchain": {
+    "chain_length": 0,
+    "integrity": "VALID",
+    "last_verified": "2026-04-07T08:00:00",
+    "last_checkpoint": "Pending"
+  },
+  "performance": {
+    "cpu_percent": 0.0,
+    "ram_mb": 0.0,
+    "fps": 0.0,
+    "cpu_temp_c": 0.0,
+    "gpu_temp_c": 0.0,
+    "gpu_freq_pct": 0.0
+  },
+  "system": {
+    "status": "online",
+    "uptime_hours": 0,
+    "total_frames": 0,
+    "cloud_sync": "connected"
+  }
+}

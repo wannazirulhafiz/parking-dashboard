@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Parking Security Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border-bottom: 1px solid #334155;
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header-left h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #38bdf8;
+      letter-spacing: 0.5px;
+    }
+    .header-left p {
+      font-size: 0.78rem;
+      color: #64748b;
+      margin-top: 2px;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .status-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 8px #22c55e;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .status-text { font-size: 0.8rem; color: #94a3b8; }
+    #last-updated { font-size: 0.75rem; color: #475569; }
+
+    /* ── Main grid ── */
+    main {
+      padding: 24px 32px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows: auto auto auto;
+      gap: 20px;
+    }
+
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .card-title {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #64748b;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title .icon { font-size: 0.9rem; }
+
+    /* ── Stat cards ── */
+    .stat-cards {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    .stat-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .stat-icon {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+    }
+    .stat-icon.blue  { background: #0c4a6e; }
+    .stat-icon.green { background: #14532d; }
+    .stat-icon.yellow{ background: #713f12; }
+    .stat-icon.purple{ background: #4c1d95; }
+    .stat-label { font-size: 0.72rem; color: #64748b; margin-bottom: 4px; }
+    .stat-value { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+    .stat-value.blue   { color: #38bdf8; }
+    .stat-value.green  { color: #4ade80; }
+    .stat-value.yellow { color: #fbbf24; }
+    .stat-value.purple { color: #a78bfa; }
+    .stat-sub { font-size: 0.68rem; color: #475569; margin-top: 3px; }
+
+    /* ── Parking grid ── */
+    .parking-card { grid-column: 1 / 3; }
+    .slots-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+    .slot {
+      border-radius: 8px;
+      padding: 14px 8px;
+      text-align: center;
+      cursor: default;
+      transition: transform 0.2s;
+    }
+    .slot:hover { transform: scale(1.05); }
+    .slot.occupied {
+      background: #450a0a;
+      border: 1px solid #991b1b;
+    }
+    .slot.free {
+      background: #052e16;
+      border: 1px solid #166534;
+    }
+    .slot-num {
+      font-size: 0.65rem;
+      color: #94a3b8;
+      margin-bottom: 6px;
+    }
+    .slot-icon { font-size: 1.3rem; }
+    .slot-label {
+      font-size: 0.6rem;
+      margin-top: 5px;
+      font-weight: 600;
+    }
+    .slot.occupied .slot-label { color: #f87171; }
+    .slot.free .slot-label     { color: #4ade80; }
+
+    .occupancy-summary {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 14px;
+      padding: 10px 14px;
+      background: #0f172a;
+      border-radius: 8px;
+      font-size: 0.75rem;
+    }
+    .occ-item { text-align: center; }
+    .occ-num  { font-size: 1.1rem; font-weight: 700; }
+    .occ-num.red   { color: #f87171; }
+    .occ-num.green { color: #4ade80; }
+    .occ-num.blue  { color: #38bdf8; }
+    .occ-label { color: #64748b; margin-top: 2px; }
+
+    /* ── Blockchain card ── */
+    .blockchain-card { grid-column: 3; }
+    .chain-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #1e3a5f22;
+      font-size: 0.8rem;
+    }
+    .chain-item:last-child { border-bottom: none; }
+    .chain-key { color: #64748b; }
+    .chain-val { font-weight: 600; color: #e2e8f0; }
+    .badge {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.68rem;
+      font-weight: 700;
+    }
+    .badge.valid   { background: #14532d; color: #4ade80; }
+    .badge.invalid { background: #450a0a; color: #f87171; }
+    .badge.pending { background: #1c1917; color: #a78bfa; }
+
+    /* ── Performance card ── */
+    .perf-card { grid-column: 1 / 3; }
+    .perf-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .perf-item {
+      background: #0f172a;
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    .perf-label { font-size: 0.68rem; color: #64748b; margin-bottom: 6px; }
+    .perf-value { font-size: 1.2rem; font-weight: 700; color: #38bdf8; }
+    .perf-unit  { font-size: 0.7rem; color: #475569; }
+    .progress-bar {
+      height: 5px;
+      background: #1e3a5f;
+      border-radius: 3px;
+      margin-top: 6px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+    .progress-fill.cpu { background: #38bdf8; }
+    .progress-fill.ram { background: #a78bfa; }
+    .progress-fill.gpu { background: #fb923c; }
+
+    /* ── Chart card ── */
+    .chart-card { grid-column: 3; }
+    .chart-wrap { position: relative; height: 180px; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 16px;
+      font-size: 0.72rem;
+      color: #334155;
+      border-top: 1px solid #1e293b;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      main { grid-template-columns: 1fr; padding: 16px; }
+      .stat-cards { grid-template-columns: repeat(2, 1fr); }
+      .parking-card, .perf-card { grid-column: 1; }
+      .blockchain-card, .chart-card { grid-column: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Smart Parking Security Dashboard</h1>
+    <p>Multi-Layer Edge Security System — NVIDIA Jetson Nano</p>
+  </div>
+  <div class="header-right">
+    <div class="status-dot" id="online-dot"></div>
+    <span class="status-text" id="system-status">System Online</span>
+    <span id="last-updated">—</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- Stat Cards -->
+  <div class="stat-cards">
+    <div class="stat-card">
+      <div class="stat-icon blue">🅿️</div>
+      <div>
+        <div class="stat-label">Available Slots</div>
+        <div class="stat-value blue" id="slots-free">—</div>
+        <div class="stat-sub" id="slots-total">of 15 total</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green">🔗</div>
+      <div>
+        <div class="stat-label">Chain Length</div>
+        <div class="stat-value green" id="chain-length">—</div>
+        <div class="stat-sub">blocks verified</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon yellow">📷</div>
+      <div>
+        <div class="stat-label">Frames Captured</div>
+        <div class="stat-value yellow" id="total-frames">—</div>
+        <div class="stat-sub" id="fps-stat">— FPS</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon purple">☁️</div>
+      <div>
+        <div class="stat-label">Cloud Sync</div>
+        <div class="stat-value purple" id="cloud-sync">—</div>
+        <div class="stat-sub">AWS DynamoDB</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Parking Slots -->
+  <div class="card parking-card">
+    <div class="card-title"><span class="icon">🅿️</span> Parking Slot Status</div>
+    <div class="slots-grid" id="slots-grid"></div>
+    <div class="occupancy-summary">
+      <div class="occ-item">
+        <div class="occ-num red" id="occ-occupied">—</div>
+        <div class="occ-label">Occupied</div>
+      </div>
+      <div class="occ-item">
+        <div class="occ-num green" id="occ-free">—</div>
+        <div class="occ-label">Available</div>
+      </div>
+      <div class="occ-item">
+        <div class="occ-num blue" id="occ-rate">—</div>
+        <div class="occ-label">Occupancy Rate</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Blockchain -->
+  <div class="card blockchain-card">
+    <div class="card-title"><span class="icon">🔗</span> Blockchain Integrity</div>
+    <div class="chain-item">
+      <span class="chain-key">Integrity Status</span>
+      <span id="integrity-badge" class="badge pending">—</span>
+    </div>
+    <div class="chain-item">
+      <span class="chain-key">Chain Length</span>
+      <span class="chain-val" id="bc-chain-length">—</span>
+    </div>
+    <div class="chain-item">
+      <span class="chain-key">Last Verified</span>
+      <span class="chain-val" id="bc-last-verified">—</span>
+    </div>
+    <div class="chain-item">
+      <span class="chain-key">Last Checkpoint</span>
+      <span class="chain-val" id="bc-last-checkpoint">—</span>
+    </div>
+    <div class="chain-item">
+      <span class="chain-key">Hash Algorithm</span>
+      <span class="chain-val">SHA-256</span>
+    </div>
+    <div class="chain-item">
+      <span class="chain-key">Cloud Anchor</span>
+      <span class="chain-val">AWS DynamoDB</span>
+    </div>
+    <div class="chain-item">
+      <span class="chain-key">Device</span>
+      <span class="chain-val" id="bc-device">—</span>
+    </div>
+  </div>
+
+  <!-- Performance -->
+  <div class="card perf-card">
+    <div class="card-title"><span class="icon">📊</span> System Performance</div>
+    <div class="perf-grid">
+      <div class="perf-item">
+        <div class="perf-label">CPU Usage</div>
+        <div><span class="perf-value" id="cpu-val">—</span><span class="perf-unit"> %</span></div>
+        <div class="progress-bar"><div class="progress-fill cpu" id="cpu-bar" style="width:0%"></div></div>
+      </div>
+      <div class="perf-item">
+        <div class="perf-label">RAM Usage</div>
+        <div><span class="perf-value" id="ram-val">—</span><span class="perf-unit"> MB</span></div>
+        <div class="progress-bar"><div class="progress-fill ram" id="ram-bar" style="width:0%"></div></div>
+      </div>
+      <div class="perf-item">
+        <div class="perf-label">GPU Freq</div>
+        <div><span class="perf-value" id="gpu-val">—</span><span class="perf-unit"> %</span></div>
+        <div class="progress-bar"><div class="progress-fill gpu" id="gpu-bar" style="width:0%"></div></div>
+      </div>
+      <div class="perf-item">
+        <div class="perf-label">CPU Temp</div>
+        <div><span class="perf-value" id="cpu-temp">—</span><span class="perf-unit"> °C</span></div>
+      </div>
+      <div class="perf-item">
+        <div class="perf-label">GPU Temp</div>
+        <div><span class="perf-value" id="gpu-temp">—</span><span class="perf-unit"> °C</span></div>
+      </div>
+      <div class="perf-item">
+        <div class="perf-label">Frame Rate</div>
+        <div><span class="perf-value" id="fps-val">—</span><span class="perf-unit"> FPS</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Occupancy Chart -->
+  <div class="card chart-card">
+    <div class="card-title"><span class="icon">📈</span> Occupancy Overview</div>
+    <div class="chart-wrap">
+      <canvas id="occupancyChart"></canvas>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Smart Parking Security System &mdash; Master Thesis &mdash; Nazirul Hafiz &mdash;
+  Edge AI + Blockchain Integrity on NVIDIA Jetson Nano
+</footer>
+
+<script>
+  // ── Occupancy doughnut chart ──
+  const ctx = document.getElementById('occupancyChart').getContext('2d');
+  const occupancyChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Occupied', 'Available'],
+      datasets: [{
+        data: [0, 15],
+        backgroundColor: ['#991b1b', '#166534'],
+        borderColor: ['#450a0a', '#052e16'],
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '70%',
+      plugins: {
+        legend: {
+          labels: { color: '#94a3b8', font: { size: 11 } }
+        }
+      }
+    }
+  });
+
+  // ── Load status.json ──
+  async function loadStatus() {
+    try {
+      const res  = await fetch('status.json?t=' + Date.now());
+      const data = await res.json();
+      updateDashboard(data);
+    } catch (e) {
+      document.getElementById('system-status').textContent = 'Data Unavailable';
+      document.getElementById('online-dot').style.background = '#ef4444';
+      document.getElementById('online-dot').style.boxShadow  = '0 0 8px #ef4444';
+    }
+  }
+
+  function fmt(dt) {
+    if (!dt || dt === 'Pending') return dt || '—';
+    try {
+      return new Date(dt).toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' });
+    } catch { return dt; }
+  }
+
+  function updateDashboard(d) {
+    // Last updated
+    document.getElementById('last-updated').textContent =
+      'Updated: ' + fmt(d.last_updated);
+
+    // Slots
+    const grid     = document.getElementById('slots-grid');
+    const occupied = d.parking_slots.filter(s => s.occupied).length;
+    const free     = d.parking_slots.length - occupied;
+    const rate     = Math.round((occupied / d.parking_slots.length) * 100);
+
+    grid.innerHTML = '';
+    d.parking_slots.forEach(slot => {
+      grid.innerHTML += `
+        <div class="slot ${slot.occupied ? 'occupied' : 'free'}">
+          <div class="slot-num">P${slot.id}</div>
+          <div class="slot-icon">${slot.occupied ? '🚗' : '⬜'}</div>
+          <div class="slot-label">${slot.occupied ? 'Occupied' : 'Free'}</div>
+        </div>`;
+    });
+
+    document.getElementById('slots-free').textContent    = free;
+    document.getElementById('occ-occupied').textContent  = occupied;
+    document.getElementById('occ-free').textContent      = free;
+    document.getElementById('occ-rate').textContent      = rate + '%';
+
+    // Stat cards
+    document.getElementById('chain-length').textContent  = d.blockchain.chain_length;
+    document.getElementById('total-frames').textContent  = d.system.total_frames;
+    document.getElementById('fps-stat').textContent      = d.performance.fps.toFixed(2) + ' FPS';
+    document.getElementById('cloud-sync').textContent    = d.system.cloud_sync === 'connected' ? '✓' : '✗';
+
+    // Blockchain panel
+    const integrity = d.blockchain.integrity;
+    const badge = document.getElementById('integrity-badge');
+    badge.textContent  = integrity;
+    badge.className    = 'badge ' + (integrity === 'VALID' ? 'valid' : integrity === 'TAMPERED' ? 'invalid' : 'pending');
+
+    document.getElementById('bc-chain-length').textContent    = d.blockchain.chain_length + ' blocks';
+    document.getElementById('bc-last-verified').textContent   = fmt(d.blockchain.last_verified);
+    document.getElementById('bc-last-checkpoint').textContent = fmt(d.blockchain.last_checkpoint);
+    document.getElementById('bc-device').textContent          = d.device_id;
+
+    // Performance
+    const p = d.performance;
+    document.getElementById('cpu-val').textContent  = p.cpu_percent.toFixed(1);
+    document.getElementById('ram-val').textContent  = p.ram_mb.toFixed(0);
+    document.getElementById('gpu-val').textContent  = p.gpu_freq_pct.toFixed(0);
+    document.getElementById('cpu-temp').textContent = p.cpu_temp_c.toFixed(1);
+    document.getElementById('gpu-temp').textContent = p.gpu_temp_c.toFixed(1);
+    document.getElementById('fps-val').textContent  = p.fps.toFixed(2);
+
+    document.getElementById('cpu-bar').style.width = Math.min(p.cpu_percent, 100) + '%';
+    document.getElementById('ram-bar').style.width = Math.min((p.ram_mb / 4096) * 100, 100) + '%';
+    document.getElementById('gpu-bar').style.width = Math.min(p.gpu_freq_pct, 100) + '%';
+
+    // Chart
+    occupancyChart.data.datasets[0].data = [occupied, free];
+    occupancyChart.update();
+  }
+
+  // Load immediately, then refresh every 30 seconds
+  loadStatus();
+  setInterval(loadStatus, 30000);
+</script>
+</body>
+</html>
