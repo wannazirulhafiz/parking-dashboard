@@ -321,7 +321,7 @@ footer{border-top:1.5px solid var(--ink);padding:24px 0;margin-top:80px}
           <li><span class="li-dot" style="background:var(--green)"></span>Flask web stream (web_stream.py)</li>
           <li><span class="li-dot" style="background:var(--green)"></span>ROI polygon — 15 spots (rois.json)</li>
           <li><span class="li-dot" style="background:var(--green)"></span>OpenCV Canny edge detection</li>
-          <li><span class="li-dot" style="background:var(--green)"></span>Thresholds: low=50, high=150</li>
+          <li><span class="li-dot" style="background:var(--green)"></span>Thresholds: low=100, high=200</li>
           <li><span class="li-dot" style="background:var(--green)"></span>Occupancy: Occupied / Empty</li>
           <li><span class="li-dot" style="background:var(--green)"></span>Interval: 1 frame every 5 seconds</li>
           <li><span class="li-dot" style="background:var(--green)"></span>Frames stored locally on Jetson only</li>
@@ -379,10 +379,10 @@ footer{border-top:1.5px solid var(--ink);padding:24px 0;margin-top:80px}
       <div class="card-title">NVIDIA Jetson Nano (4GB)</div>
       <p><strong>CPU:</strong> ARM Cortex-A57 quad-core @ 1.43 GHz<br>
       <strong>RAM:</strong> 4 GB LPDDR4<br>
-      <strong>Storage:</strong> 32 GB microSD<br>
-      <strong>OS:</strong> Ubuntu 20.04 (headless mode)<br>
+      <strong>Storage:</strong> 128 GB eMMC<br>
+      <strong>OS:</strong> Ubuntu 18.04 LTS (headless mode)<br>
       <strong>Access:</strong> SSH via Tailscale VPN (100.90.53.23)<br>
-      <strong>Python:</strong> 3.6+ · OpenCV · hashlib · boto3 · psutil · Flask</p>
+      <strong>Python:</strong> 3.8 · OpenCV 4.11 · hashlib · boto3 1.37 · psutil 7.2</p>
     </div>
     <div class="card">
       <div class="card-head">Hardware — Cloud Anchor</div>
@@ -391,7 +391,7 @@ footer{border-top:1.5px solid var(--ink);padding:24px 0;margin-top:80px}
       <strong>Partition key:</strong> anchor_id (String)<br>
       <strong>Attributes:</strong> chain_hash, block_index, timestamp, device_id<br>
       <strong>Consistency:</strong> Strong read (boto3)<br>
-      <strong>Region:</strong> ap-southeast-1 (Singapore)<br>
+      <strong>Region:</strong> us-east-1 (N. Virginia)<br>
       <strong>Access:</strong> AWS CLI configured on Jetson · IAM role with DynamoDB PutItem/GetItem</p>
     </div>
   </div>
@@ -618,7 +618,7 @@ table = dynamodb.Table(<span class="st">'parking_blockchain'</span>)
 <span class="kw">from</span> parking_detector <span class="kw">import</span> detect_occupancy
 
 chain = []
-ANCHOR_INTERVAL = <span class="nu">100</span>  <span class="cm"># anchor every 100 blocks</span>
+ANCHOR_INTERVAL = <span class="nu">10</span>   <span class="cm"># anchor every 10 blocks</span>
 FRAME_INTERVAL  = <span class="nu">5</span>    <span class="cm"># capture every 5 seconds</span>
 
 <span class="kw">def</span> <span class="fn">process_frame</span>(frame, prev_hash: <span class="ty">str</span>, index: <span class="ty">int</span>):
