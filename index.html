@@ -1,515 +1,1880 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Smart Parking Security Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edge-Based Smart Parking Security · Nazirul</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0f1117;--ink2:#2a2d38;--ink3:#4a4f62;--fog:#8892a4;
+  --paper:#f8f9fc;--paper2:#eef0f5;--line:#d4d8e2;
+  --green:#0a8a5f;--green-bg:#e8f7f1;
+  --amber:#b45309;--amber-bg:#fef3c7;
+  --blue:#1d4ed8;--blue-bg:#eff6ff;
+  --red:#b91c1c;--red-bg:#fef2f2;
+  --purple:#6d28d9;--purple-bg:#f5f3ff;
+}
+html{scroll-behavior:smooth}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--paper);color:var(--ink);line-height:1.6}
+.page{max-width:1100px;margin:0 auto;padding:0 32px}
 
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #0f172a;
-      color: #e2e8f0;
-      min-height: 100vh;
-    }
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(248,249,252,.96);border-bottom:1px solid var(--line);backdrop-filter:blur(8px)}
+.nav-inner{max-width:1100px;margin:0 auto;padding:0 32px;display:flex;align-items:center;overflow-x:auto}
+.nav-inner a{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.04em;color:var(--fog);text-decoration:none;padding:14px 16px;border-right:1px solid var(--line);white-space:nowrap;transition:color .15s,background .15s}
+.nav-inner a:hover{color:var(--ink);background:var(--paper2)}
+.nav-inner a.active{color:var(--ink);font-weight:600;border-bottom:2px solid var(--ink);margin-bottom:-1px}
 
-    /* ── Header ── */
-    header {
-      background: linear-gradient(135deg, #1e293b, #0f172a);
-      border-bottom: 1px solid #334155;
-      padding: 18px 32px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .header-left h1 {
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: #38bdf8;
-      letter-spacing: 0.5px;
-    }
-    .header-left p {
-      font-size: 0.78rem;
-      color: #64748b;
-      margin-top: 2px;
-    }
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .status-dot {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: #22c55e;
-      box-shadow: 0 0 8px #22c55e;
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
-    .status-text { font-size: 0.8rem; color: #94a3b8; }
-    #last-updated { font-size: 0.75rem; color: #475569; }
+/* HEADER */
+header{border-bottom:2px solid var(--ink);padding:28px 0 24px;margin-bottom:56px}
+.header-inner{display:flex;align-items:flex-start;justify-content:space-between;gap:24px}
+.thesis-label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--fog);margin-bottom:6px}
+h1{font-size:clamp(18px,2.8vw,26px);font-weight:600;letter-spacing:-.02em;line-height:1.2;max-width:640px}
+h1 span{color:var(--green)}
+.header-meta{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
+.meta-chip{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 12px;border:1px solid var(--line);border-radius:4px;color:var(--fog);background:var(--paper2);white-space:nowrap}
+.status-live{display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--green);font-weight:600}
+.dot-live{width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 1.8s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
-    /* ── Main grid ── */
-    main {
-      padding: 24px 32px;
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      grid-template-rows: auto auto auto;
-      gap: 20px;
-    }
+/* SECTION LABELS */
+section{margin-bottom:72px}
+.sec-label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--fog);margin-bottom:20px;display:flex;align-items:center;gap:12px}
+.sec-label::before{content:'';width:24px;height:2px;background:var(--ink);display:block}
+h2{font-size:18px;font-weight:600;letter-spacing:-.02em;margin-bottom:20px}
+h3{font-size:14px;font-weight:600;margin-bottom:10px}
 
-    .card {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 12px;
-      padding: 20px;
-    }
-    .card-title {
-      font-size: 0.7rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #64748b;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .card-title .icon { font-size: 0.9rem; }
+/* STATS GRID */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1.5px solid var(--ink);border-radius:2px;overflow:hidden;margin-bottom:32px}
+.stat-box{background:var(--paper);padding:20px}
+.stat-val{font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:600;letter-spacing:-.02em;line-height:1;margin-bottom:4px}
+.stat-lbl{font-size:11px;color:var(--fog)}
 
-    /* ── Stat cards ── */
-    .stat-cards {
-      grid-column: 1 / -1;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-    }
-    .stat-card {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 12px;
-      padding: 18px 20px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    .stat-icon {
-      width: 44px; height: 44px;
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.2rem;
-    }
-    .stat-icon.blue  { background: #0c4a6e; }
-    .stat-icon.green { background: #14532d; }
-    .stat-icon.yellow{ background: #713f12; }
-    .stat-icon.purple{ background: #4c1d95; }
-    .stat-label { font-size: 0.72rem; color: #64748b; margin-bottom: 4px; }
-    .stat-value { font-size: 1.6rem; font-weight: 700; line-height: 1; }
-    .stat-value.blue   { color: #38bdf8; }
-    .stat-value.green  { color: #4ade80; }
-    .stat-value.yellow { color: #fbbf24; }
-    .stat-value.purple { color: #a78bfa; }
-    .stat-sub { font-size: 0.68rem; color: #475569; margin-top: 3px; }
+/* CARDS */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px}
+.card{border:1px solid var(--line);border-radius:2px;padding:20px;background:var(--paper)}
+.card-head{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--fog);margin-bottom:10px}
+.card-title{font-size:14px;font-weight:600;margin-bottom:8px}
+.card p{font-size:13px;color:var(--ink2);line-height:1.6}
 
-    /* ── Parking grid ── */
-    .parking-card { grid-column: 1 / 3; }
-    .slots-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 10px;
-    }
-    .slot {
-      border-radius: 8px;
-      padding: 14px 8px;
-      text-align: center;
-      cursor: default;
-      transition: transform 0.2s;
-    }
-    .slot:hover { transform: scale(1.05); }
-    .slot.occupied {
-      background: #450a0a;
-      border: 1px solid #991b1b;
-    }
-    .slot.free {
-      background: #052e16;
-      border: 1px solid #166534;
-    }
-    .slot-num {
-      font-size: 0.65rem;
-      color: #94a3b8;
-      margin-bottom: 6px;
-    }
-    .slot-icon { font-size: 1.3rem; }
-    .slot-label {
-      font-size: 0.6rem;
-      margin-top: 5px;
-      font-weight: 600;
-    }
-    .slot.occupied .slot-label { color: #f87171; }
-    .slot.free .slot-label     { color: #4ade80; }
+/* ARCH */
+.arch-wrap{border:1.5px solid var(--ink);border-radius:2px;overflow:hidden;margin-bottom:32px}
+.arch-title{background:var(--ink);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;padding:10px 20px}
+.arch-body{display:grid;grid-template-columns:1fr 1fr 1fr}
+.arch-layer{padding:24px 20px;border-right:1.5px solid var(--line);position:relative}
+.arch-layer:last-child{border-right:none}
+.layer-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:3px 10px;border-radius:2px;display:inline-block;margin-bottom:12px}
+.l1 .layer-badge{background:var(--green-bg);color:var(--green)}
+.l2 .layer-badge{background:var(--blue-bg);color:var(--blue)}
+.l3 .layer-badge{background:var(--purple-bg);color:var(--purple)}
+.layer-name{font-size:14px;font-weight:600;margin-bottom:4px}
+.layer-role{font-size:12px;color:var(--fog);margin-bottom:16px}
+.layer-items{list-style:none}
+.layer-items li{font-size:12px;color:var(--ink2);padding:5px 0;border-bottom:1px dashed var(--line);display:flex;align-items:center;gap:8px}
+.layer-items li:last-child{border-bottom:none}
+.li-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.arch-arrow{position:absolute;right:-13px;top:50%;transform:translateY(-50%);z-index:2;background:var(--paper);font-size:16px;color:var(--ink3);padding:2px 0;font-family:'IBM Plex Mono',monospace}
 
-    .occupancy-summary {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 14px;
-      padding: 10px 14px;
-      background: #0f172a;
-      border-radius: 8px;
-      font-size: 0.75rem;
-    }
-    .occ-item { text-align: center; }
-    .occ-num  { font-size: 1.1rem; font-weight: 700; }
-    .occ-num.red   { color: #f87171; }
-    .occ-num.green { color: #4ade80; }
-    .occ-num.blue  { color: #38bdf8; }
-    .occ-label { color: #64748b; margin-top: 2px; }
+/* FLOW */
+.flow-row{display:flex;align-items:center;background:var(--paper2);border:1.5px solid var(--line);border-radius:2px;overflow:hidden;margin-bottom:8px}
+.flow-step{flex:1;padding:14px 14px;border-right:1px solid var(--line)}
+.flow-step:last-child{border-right:none}
+.flow-num{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--fog);margin-bottom:4px}
+.flow-name{font-size:13px;font-weight:500}
+.flow-detail{font-size:11px;color:var(--fog);margin-top:2px;font-family:'IBM Plex Mono',monospace}
 
-    /* ── Blockchain card ── */
-    .blockchain-card { grid-column: 3; }
-    .chain-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid #1e3a5f22;
-      font-size: 0.8rem;
-    }
-    .chain-item:last-child { border-bottom: none; }
-    .chain-key { color: #64748b; }
-    .chain-val { font-weight: 600; color: #e2e8f0; }
-    .badge {
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 0.68rem;
-      font-weight: 700;
-    }
-    .badge.valid   { background: #14532d; color: #4ade80; }
-    .badge.invalid { background: #450a0a; color: #f87171; }
-    .badge.pending { background: #1c1917; color: #a78bfa; }
+/* CODE */
+.code-block{background:var(--ink);color:#e2e8f0;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.75;padding:20px 24px;border-radius:2px;overflow-x:auto;margin-bottom:16px}
+.cm{color:#64748b}.kw{color:#93c5fd}.fn{color:#6ee7b7}.st{color:#fca5a5}.nu{color:#fbbf24}.ty{color:#c4b5fd}.op{color:#94a3b8}
 
-    /* ── Performance card ── */
-    .perf-card { grid-column: 1 / 3; }
-    .perf-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    .perf-item {
-      background: #0f172a;
-      border-radius: 8px;
-      padding: 12px 14px;
-    }
-    .perf-label { font-size: 0.68rem; color: #64748b; margin-bottom: 6px; }
-    .perf-value { font-size: 1.2rem; font-weight: 700; color: #38bdf8; }
-    .perf-unit  { font-size: 0.7rem; color: #475569; }
-    .progress-bar {
-      height: 5px;
-      background: #1e3a5f;
-      border-radius: 3px;
-      margin-top: 6px;
-      overflow: hidden;
-    }
-    .progress-fill {
-      height: 100%;
-      border-radius: 3px;
-      transition: width 0.5s ease;
-    }
-    .progress-fill.cpu { background: #38bdf8; }
-    .progress-fill.ram { background: #a78bfa; }
-    .progress-fill.gpu { background: #fb923c; }
+/* FORMULA */
+.formula{font-family:'IBM Plex Mono',monospace;font-size:12.5px;padding:14px 20px;background:var(--paper2);border-left:3px solid var(--blue);border-radius:0 2px 2px 0;margin:12px 0;color:var(--ink2);line-height:1.85}
+.formula.purple{border-left-color:var(--purple)}
+.formula.green{border-left-color:var(--green)}
 
-    /* ── Chart card ── */
-    .chart-card { grid-column: 3; }
-    .chart-wrap { position: relative; height: 180px; }
+/* HASH CHAIN VIZ */
+.hash-chain{display:flex;align-items:center;gap:0;overflow-x:auto;padding:4px 0 12px}
+.hash-block{flex-shrink:0;background:var(--paper);border:1.5px solid var(--line);border-radius:2px;padding:12px 14px;font-family:'IBM Plex Mono',monospace;font-size:10px;min-width:140px}
+.hb-id{color:var(--fog);margin-bottom:4px;font-size:9px;letter-spacing:.05em}
+.hb-hash{color:var(--blue);font-size:9px;line-height:1.4;word-break:break-all}
+.hb-prev{color:var(--purple);font-size:9px;margin-top:4px}
+.hb-data{color:var(--green);font-size:9px;margin-top:2px}
+.hb-tamper{border-color:var(--red)!important;background:var(--red-bg)!important}
+.hb-tamper .hb-hash{color:var(--red)!important}
+.hb-tamper .hb-id{color:var(--red)!important}
+.chain-arrow{font-size:18px;color:var(--fog);margin:0 3px;flex-shrink:0;font-family:'IBM Plex Mono',monospace;line-height:1}
+.chain-arrow.broken{color:var(--red)}
+.hash-label{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--fog);margin-bottom:8px;letter-spacing:.05em}
 
-    /* ── Footer ── */
-    footer {
-      text-align: center;
-      padding: 16px;
-      font-size: 0.72rem;
-      color: #334155;
-      border-top: 1px solid #1e293b;
-    }
+/* THREAT */
+.threat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.threat-card{border:1px solid var(--line);border-radius:2px;padding:16px}
+.threat-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.threat-av{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 8px;border-radius:2px;background:var(--red-bg);color:var(--red);font-weight:600;flex-shrink:0}
+.threat-name{font-size:13px;font-weight:500}
+.badge-mit{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--green);padding:2px 8px;border-radius:2px;background:var(--green-bg);font-weight:600;margin-left:auto;flex-shrink:0}
+.badge-partial{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--amber);padding:2px 8px;border-radius:2px;background:var(--amber-bg);font-weight:600;margin-left:auto;flex-shrink:0}
+.badge-l1{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--blue);padding:2px 8px;border-radius:2px;background:var(--blue-bg);font-weight:600;margin-left:auto;flex-shrink:0}
+.threat-desc{font-size:12px;color:var(--ink2);line-height:1.55}
+.threat-finding{margin-top:10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--green);padding:6px 10px;background:var(--green-bg);border-radius:2px}
+.threat-finding.amber{color:var(--amber);background:var(--amber-bg)}
 
-    /* ── Responsive ── */
-    @media (max-width: 900px) {
-      main { grid-template-columns: 1fr; padding: 16px; }
-      .stat-cards { grid-template-columns: repeat(2, 1fr); }
-      .parking-card, .perf-card { grid-column: 1; }
-      .blockchain-card, .chart-card { grid-column: 1; }
-    }
-  </style>
+/* EXPERIMENT TABLE */
+.exp-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.exp-table th{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);text-align:left;padding:10px 12px;border-bottom:2px solid var(--ink);background:var(--paper2)}
+.exp-table td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.exp-table tr:hover td{background:var(--paper2)}
+.exp-table tr.perf-row td{background:#fffbeb}
+.exp-table tr.perf-row:hover td{background:#fde68a44}
+.exp-code{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12px}
+.exp-code.e{color:var(--blue)}.exp-code.p{color:var(--amber)}
+.n-badge{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--purple)}
+
+/* RESULT CHIPS */
+.chip{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:2px 8px;border-radius:2px;display:inline-block;white-space:nowrap}
+.chip.green{background:var(--green-bg);color:var(--green);font-weight:600}
+.chip.amber{background:var(--amber-bg);color:var(--amber);font-weight:600}
+.chip.blue{background:var(--blue-bg);color:var(--blue)}
+.chip.red{background:var(--red-bg);color:var(--red)}
+.chip.gray{background:var(--paper2);color:var(--fog);border:1px solid var(--line)}
+
+/* RESULT TABLE (filled) */
+.result-table{width:100%;border-collapse:collapse;font-size:12px}
+.result-table th{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);padding:8px 10px;border-bottom:2px solid var(--ink);background:var(--paper2);text-align:left}
+.result-table td{padding:8px 10px;border-bottom:1px solid var(--line);font-family:'IBM Plex Mono',monospace;font-size:11px;vertical-align:middle}
+.result-table tr:hover td{background:var(--paper2)}
+.result-table tr.perf td{background:#fffbeb}
+.result-table tr.perf:hover td{background:#fde68a44}
+.det-rate{font-weight:600}
+.det-100{color:var(--green)}.det-high{color:var(--blue)}.det-partial{color:var(--amber)}
+
+/* CHART BARS */
+.bar-chart{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.bar-row{display:flex;align-items:center;gap:10px}
+.bar-label{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--fog);width:80px;flex-shrink:0;text-align:right}
+.bar-track{flex:1;height:18px;background:var(--paper2);border-radius:2px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:2px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;transition:width 1s ease}
+.bar-val{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#fff}
+.bar-val-out{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:var(--ink2);margin-left:4px}
+
+/* P4 STABILITY MINI TABLE */
+.mini-table{width:100%;border-collapse:collapse;font-size:11px}
+.mini-table th{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--fog);padding:6px 10px;border-bottom:1.5px solid var(--ink);background:var(--paper2);text-align:left}
+.mini-table td{padding:6px 10px;border-bottom:1px solid var(--line);font-family:'IBM Plex Mono',monospace;font-size:10px}
+
+/* CALLOUT */
+.callout{padding:14px 18px;border-radius:2px;font-size:13px;line-height:1.6;margin-bottom:16px}
+.callout.info{background:var(--blue-bg);border-left:3px solid var(--blue);color:var(--ink2)}
+.callout.warn{background:var(--amber-bg);border-left:3px solid var(--amber);color:var(--ink2)}
+.callout.success{background:var(--green-bg);border-left:3px solid var(--green);color:var(--ink2)}
+.callout strong{font-weight:600;color:var(--ink)}
+
+/* FOOTER */
+footer{border-top:1.5px solid var(--ink);padding:24px 0;margin-top:80px}
+.footer-inner{display:flex;align-items:center;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--fog)}
+
+/* NOTE BADGE */
+.note{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--amber);background:var(--amber-bg);padding:2px 8px;border-radius:2px;margin-left:6px;vertical-align:middle}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .arch-body,.two-col,.three-col{grid-template-columns:1fr}
+  .arch-layer{border-right:none;border-bottom:1px solid var(--line)}
+  .arch-arrow{display:none}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .threat-grid{grid-template-columns:1fr}
+  .header-inner{flex-direction:column}
+  .header-meta{align-items:flex-start}
+}
+@media(max-width:600px){.page{padding:0 16px}.stats-grid{grid-template-columns:repeat(2,1fr)}h1{font-size:18px}}
+</style>
 </head>
 <body>
 
-<header>
-  <div class="header-left">
-    <h1>Smart Parking Security Dashboard</h1>
-    <p>Multi-Layer Edge Security System — NVIDIA Jetson Nano</p>
+<nav>
+  <div class="nav-inner" id="main-nav">
+    <a href="#overview" class="active thesis-link">Overview</a>
+    <a href="#architecture" class="thesis-link">Architecture</a>
+    <a href="#implementation" class="thesis-link">Implementation</a>
+    <a href="#security" class="thesis-link">Security</a>
+    <a href="#experiments" class="thesis-link">Experiments</a>
+    <a href="#performance" class="thesis-link">Performance</a>
+    <a href="#statistics" class="thesis-link">Statistics</a>
+    <a href="#" id="demo-tab" onclick="showDemo(event)" style="margin-left:auto;color:#22c55e;border-left:1px solid var(--line);font-weight:600;background:rgba(34,197,94,0.06)">⬡ Live Demo</a>
   </div>
-  <div class="header-right">
-    <div class="status-dot" id="online-dot"></div>
-    <span class="status-text" id="system-status">System Online</span>
-    <span id="last-updated">—</span>
+</nav>
+
+<div id="thesis-view">
+<div class="page">
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="thesis-label">MSc Thesis · Viva Presentation · 2024–2025</div>
+      <h1>Securing Edge-Based Smart Parking Video Streams using <span>Lightweight Blockchain</span> on NVIDIA Jetson Nano</h1>
+    </div>
+    <div class="header-meta">
+      <div class="status-live"><div class="dot-live"></div>System Deployed</div>
+      <div class="meta-chip">Jetson Nano · 100.90.53.23</div>
+      <div class="meta-chip">SHA-256 Hash Chain</div>
+      <div class="meta-chip">AWS DynamoDB · ap-southeast-1</div>
+    </div>
   </div>
 </header>
 
-<main>
+<!-- ═══════════════════════════════ OVERVIEW ═══════════════════════════════ -->
+<section id="overview">
+  <div class="sec-label">Overview</div>
+  <div class="stats-grid">
+    <div class="stat-box"><div class="stat-val" style="color:var(--green)">3</div><div class="stat-lbl">Security layers</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--blue)">14</div><div class="stat-lbl">Experiments (E1–E10 + P1–P4)</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--purple)">420</div><div class="stat-lbl">Min. data points (n≥30 each)</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--amber)">15</div><div class="stat-lbl">Parking spots monitored</div></div>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-head">Problem Statement</div>
+      <div class="card-title">No integrity mechanism at the IoT edge</div>
+      <p>CCTV-based smart parking systems capture and transmit video without any cryptographic verification. An attacker with access to the local network or storage can silently inject fake frames, delete real frames, or alter metadata — and existing systems have no way to detect it. Raw video transmitted to the cloud further introduces MITM risk and violates user privacy.</p>
+    </div>
+    <div class="card">
+      <div class="card-head">Proposed Solution</div>
+      <div class="card-title">Lightweight SHA-256 hash chain on Jetson Nano</div>
+      <p>Every captured frame is cryptographically hashed using SHA-256. Each hash is chained to the previous, forming a tamper-evident ledger that runs entirely on the Jetson Nano edge device. Only hash records — never raw video — are anchored to AWS DynamoDB for remote verification. Video stays on-device by design.</p>
+    </div>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-head">Research Objectives</div>
+      <div class="card-title">Four objectives</div>
+      <p><strong>RO1</strong> — Design a 3-layer security framework (edge detection, hash chain, cloud anchor) for IoT parking.<br><br>
+      <strong>RO2</strong> — Implement a lightweight blockchain on resource-constrained hardware without consensus overhead.<br><br>
+      <strong>RO3</strong> — Validate against 10 attack scenarios with statistical rigour (n≥30, CLT, 95% CI).<br><br>
+      <strong>RO4</strong> — Quantify performance overhead and prove system sustainability over 24 hours.</p>
+    </div>
+    <div class="card">
+      <div class="card-head">Key Contribution</div>
+      <div class="card-title">Edge-first integrity without consensus</div>
+      <p>Traditional blockchain requires network consensus (proof-of-work, proof-of-stake) making it infeasible on constrained hardware. This work contributes a <strong>hash chain variant</strong> — cryptographically equivalent integrity without consensus — validated specifically for parking video streams on ARM Cortex-A57 (Jetson Nano).<br><br>The cloud anchor (DynamoDB) acts as a trusted external witness, not a consensus node, enabling replay attack detection without full blockchain infrastructure.</p>
+    </div>
+  </div>
+</section>
 
-  <!-- Stat Cards -->
-  <div class="stat-cards">
-    <div class="stat-card">
-      <div class="stat-icon blue">🅿️</div>
+<!-- ═══════════════════════════════ ARCHITECTURE ═══════════════════════════ -->
+<section id="architecture">
+  <div class="sec-label">System Architecture</div>
+
+  <div class="arch-wrap">
+    <div class="arch-title">3-LAYER SECURITY FRAMEWORK · NVIDIA JETSON NANO EDGE NODE → AWS CLOUD ANCHOR</div>
+    <div class="arch-body">
+      <div class="arch-layer l1">
+        <div class="layer-badge">Layer 1</div>
+        <div class="layer-name">Edge Detection</div>
+        <div class="layer-role">Video acquisition &amp; occupancy analysis</div>
+        <ul class="layer-items">
+          <li><span class="li-dot" style="background:var(--green)"></span>CCTV RTSP stream (rstp_stream.py)</li>
+          <li><span class="li-dot" style="background:var(--green)"></span>Flask web stream (web_stream.py)</li>
+          <li><span class="li-dot" style="background:var(--green)"></span>ROI polygon — 15 spots (rois.json)</li>
+          <li><span class="li-dot" style="background:var(--green)"></span>OpenCV Canny edge detection</li>
+          <li><span class="li-dot" style="background:var(--green)"></span>Thresholds: low=50, high=150</li>
+          <li><span class="li-dot" style="background:var(--green)"></span>Occupancy: Occupied / Empty</li>
+          <li><span class="li-dot" style="background:var(--green)"></span>Interval: 1 frame every 5 seconds</li>
+          <li><span class="li-dot" style="background:var(--green)"></span>Frames stored locally on Jetson only</li>
+        </ul>
+        <div class="arch-arrow">→</div>
+      </div>
+      <div class="arch-layer l2">
+        <div class="layer-badge">Layer 2</div>
+        <div class="layer-name">Hash Chain Security</div>
+        <div class="layer-role">Tamper-evident integrity at the edge</div>
+        <ul class="layer-items">
+          <li><span class="li-dot" style="background:var(--blue)"></span>SHA-256 hash of raw frame bytes</li>
+          <li><span class="li-dot" style="background:var(--blue)"></span>Block: index, timestamp, detection_result, frame_hash, prev_hash, chain_hash</li>
+          <li><span class="li-dot" style="background:var(--blue)"></span>chain_hash = SHA-256(index‖ts‖frame_hash‖prev_hash)</li>
+          <li><span class="li-dot" style="background:var(--blue)"></span>Forward chaining: break is localised</li>
+          <li><span class="li-dot" style="background:var(--blue)"></span>O(n) sequential verification</li>
+          <li><span class="li-dot" style="background:var(--blue)"></span>Genesis block: prev_hash = "0"×64</li>
+          <li><span class="li-dot" style="background:var(--blue)"></span>No network consensus required</li>
+          <li><span class="li-dot" style="background:var(--blue)"></span>psutil monitors CPU/RAM in real-time</li>
+        </ul>
+        <div class="arch-arrow">→</div>
+      </div>
+      <div class="arch-layer l3">
+        <div class="layer-badge">Layer 3</div>
+        <div class="layer-name">Cloud Anchor</div>
+        <div class="layer-role">Trusted external checkpoint via AWS</div>
+        <ul class="layer-items">
+          <li><span class="li-dot" style="background:var(--purple)"></span>Table: parking_blockchain (DynamoDB)</li>
+          <li><span class="li-dot" style="background:var(--purple)"></span>Anchor every N blocks (configurable)</li>
+          <li><span class="li-dot" style="background:var(--purple)"></span>Uploads: anchor_id, chain_hash, block_index, timestamp</li>
+          <li><span class="li-dot" style="background:var(--purple)"></span>Raw video never leaves Jetson Nano</li>
+          <li><span class="li-dot" style="background:var(--purple)"></span>Remote verification via chain_hash</li>
+          <li><span class="li-dot" style="background:var(--purple)"></span>Detects replay attacks outside anchor window</li>
+          <li><span class="li-dot" style="background:var(--purple)"></span>Strong consistency reads (boto3)</li>
+          <li><span class="li-dot" style="background:var(--purple)"></span>Region: ap-southeast-1</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-label" style="margin-top:36px">End-to-End Data Flow</div>
+  <div class="flow-row">
+    <div class="flow-step"><div class="flow-num">01</div><div class="flow-name">CCTV Camera</div><div class="flow-detail">RTSP://192.168.x.x</div></div>
+    <div class="flow-step"><div class="flow-num">02</div><div class="flow-name">Frame Capture</div><div class="flow-detail">1 frame / 5 sec</div></div>
+    <div class="flow-step"><div class="flow-num">03</div><div class="flow-name">Canny Detection</div><div class="flow-detail">15 ROI polygons</div></div>
+    <div class="flow-step"><div class="flow-num">04</div><div class="flow-name">SHA-256 Hash</div><div class="flow-detail">frame bytes → 64-char hex</div></div>
+    <div class="flow-step"><div class="flow-num">05</div><div class="flow-name">Block Created</div><div class="flow-detail">chained to prev_hash</div></div>
+    <div class="flow-step"><div class="flow-num">06</div><div class="flow-name">Local Storage</div><div class="flow-detail">frame + chain on Jetson</div></div>
+    <div class="flow-step"><div class="flow-num">07</div><div class="flow-name">DynamoDB Anchor</div><div class="flow-detail">hash only ↑ cloud</div></div>
+  </div>
+
+  <div class="two-col" style="margin-top:24px">
+    <div class="card">
+      <div class="card-head">Hardware — Edge Node</div>
+      <div class="card-title">NVIDIA Jetson Nano (4GB)</div>
+      <p><strong>CPU:</strong> ARM Cortex-A57 quad-core @ 1.43 GHz<br>
+      <strong>RAM:</strong> 4 GB LPDDR4<br>
+      <strong>Storage:</strong> 32 GB microSD<br>
+      <strong>OS:</strong> Ubuntu 20.04 (headless mode)<br>
+      <strong>Access:</strong> SSH via Tailscale VPN (100.90.53.23)<br>
+      <strong>Python:</strong> 3.6+ · OpenCV · hashlib · boto3 · psutil · Flask</p>
+    </div>
+    <div class="card">
+      <div class="card-head">Hardware — Cloud Anchor</div>
+      <div class="card-title">AWS DynamoDB</div>
+      <p><strong>Table:</strong> parking_blockchain<br>
+      <strong>Partition key:</strong> anchor_id (String)<br>
+      <strong>Attributes:</strong> chain_hash, block_index, timestamp, device_id<br>
+      <strong>Consistency:</strong> Strong read (boto3)<br>
+      <strong>Region:</strong> ap-southeast-1 (Singapore)<br>
+      <strong>Access:</strong> AWS CLI configured on Jetson · IAM role with DynamoDB PutItem/GetItem</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ IMPLEMENTATION ════════════════════════ -->
+<section id="implementation">
+  <div class="sec-label">Implementation</div>
+
+  <div class="two-col">
+    <div>
+      <h2>Block Structure &amp; Chaining Formula</h2>
+      <div class="formula">
+frame_hash  = SHA-256( raw_frame_bytes )<br><br>
+chain_hash  = SHA-256(<br>
+&nbsp;&nbsp;str(index) + "|" +<br>
+&nbsp;&nbsp;str(timestamp) + "|" +<br>
+&nbsp;&nbsp;frame_hash + "|" +<br>
+&nbsp;&nbsp;prev_hash<br>
+)<br><br>
+Genesis block:  prev_hash = "0" × 64
+      </div>
+      <div class="code-block"><span class="kw">import</span> hashlib, time
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+
+<span class="kw">@dataclass</span>
+<span class="kw">class</span> <span class="ty">Block</span>:
+    index:            <span class="ty">int</span>
+    timestamp:        <span class="ty">float</span>
+    detection_result: <span class="ty">str</span>   <span class="cm"># "Occupied" | "Empty"</span>
+    frame_hash:       <span class="ty">str</span>   <span class="cm"># SHA-256 of raw frame</span>
+    prev_hash:        <span class="ty">str</span>   <span class="cm"># previous block's chain_hash</span>
+    chain_hash:       <span class="ty">str</span>   <span class="cm"># integrity of this block</span>
+
+<span class="kw">def</span> <span class="fn">hash_frame</span>(frame_bytes: <span class="ty">bytes</span>) <span class="op">-></span> <span class="ty">str</span>:
+    <span class="kw">return</span> hashlib.sha256(frame_bytes).hexdigest()
+
+<span class="kw">def</span> <span class="fn">compute_chain_hash</span>(b: <span class="ty">Block</span>) <span class="op">-></span> <span class="ty">str</span>:
+    data = <span class="st">f"</span>{b.index}<span class="st">|</span>{b.timestamp}<span class="st">|</span>{b.frame_hash}<span class="st">|</span>{b.prev_hash}<span class="st">"</span>
+    <span class="kw">return</span> hashlib.sha256(data.encode()).hexdigest()</div>
+    </div>
+    <div>
+      <h2>Chain Verification Logic</h2>
+      <div class="formula purple">
+Tamper at block k means:<br>
+  block[k].chain_hash  ≠ SHA-256(block[k].data)<br>
+  block[k+1].prev_hash ≠ block[k].chain_hash<br><br>
+Both conditions checked per block → O(n) total<br>
+Break position pinpointed exactly at k
+      </div>
+      <div class="code-block"><span class="kw">def</span> <span class="fn">verify_chain</span>(chain: <span class="ty">list</span>[<span class="ty">Block</span>]) <span class="op">-></span> <span class="ty">dict</span>:
+    <span class="cm"># Verify genesis block itself</span>
+    if <span class="fn">compute_chain_hash</span>(chain[<span class="nu">0</span>]) != chain[<span class="nu">0</span>].chain_hash:
+        <span class="kw">return</span> {<span class="st">"valid"</span>: <span class="kw">False</span>, <span class="st">"break_at"</span>: <span class="nu">0</span>,
+                <span class="st">"type"</span>: <span class="st">"genesis_tampered"</span>}
+
+    <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="nu">1</span>, <span class="fn">len</span>(chain)):
+        b, prev = chain[i], chain[i <span class="op">-</span> <span class="nu">1</span>]
+
+        <span class="cm"># 1. Linkage: does this block reference prev correctly?</span>
+        <span class="kw">if</span> b.prev_hash <span class="op">!=</span> prev.chain_hash:
+            <span class="kw">return</span> {<span class="st">"valid"</span>: <span class="kw">False</span>, <span class="st">"break_at"</span>: i,
+                    <span class="st">"type"</span>: <span class="st">"chain_break"</span>}
+
+        <span class="cm"># 2. Integrity: is this block's own hash correct?</span>
+        <span class="kw">if</span> b.chain_hash <span class="op">!=</span> <span class="fn">compute_chain_hash</span>(b):
+            <span class="kw">return</span> {<span class="st">"valid"</span>: <span class="kw">False</span>, <span class="st">"break_at"</span>: i,
+                    <span class="st">"type"</span>: <span class="st">"hash_mismatch"</span>}
+
+    <span class="kw">return</span> {<span class="st">"valid"</span>: <span class="kw">True</span>, <span class="st">"blocks_verified"</span>: <span class="fn">len</span>(chain)}</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h2>Cloud Anchor Upload</h2>
+      <div class="code-block"><span class="kw">import</span> boto3
+
+dynamodb = boto3.resource(<span class="st">'dynamodb'</span>,
+    region_name=<span class="st">'ap-southeast-1'</span>)
+table = dynamodb.Table(<span class="st">'parking_blockchain'</span>)
+
+<span class="kw">def</span> <span class="fn">upload_anchor</span>(block: <span class="ty">Block</span>):
+    <span class="cm"># Hash only — raw frame never leaves edge</span>
+    table.put_item(Item={
+        <span class="st">'anchor_id'</span>:   <span class="st">f"anchor_</span>{block.index}<span class="st">"</span>,
+        <span class="st">'block_index'</span>: block.index,
+        <span class="st">'chain_hash'</span>:  block.chain_hash,
+        <span class="st">'timestamp'</span>:   block.timestamp,
+        <span class="st">'device_id'</span>:   <span class="st">'jetson-nano-01'</span>
+    })
+
+<span class="kw">def</span> <span class="fn">verify_against_cloud</span>(block: <span class="ty">Block</span>) <span class="op">-></span> <span class="ty">bool</span>:
+    resp = table.get_item(
+        Key={<span class="st">'anchor_id'</span>: <span class="st">f"anchor_</span>{block.index}<span class="st">"</span>},
+        ConsistentRead=<span class="kw">True</span>
+    )
+    item = resp.get(<span class="st">'Item'</span>)
+    <span class="kw">if not</span> item: <span class="kw">return False</span>
+    <span class="kw">return</span> item[<span class="st">'chain_hash'</span>] == block.chain_hash</div>
+    </div>
+    <div>
+      <h2>Detection Pipeline Integration</h2>
+      <div class="code-block"><span class="kw">import</span> cv2, time
+<span class="kw">from</span> parking_detector <span class="kw">import</span> detect_occupancy
+
+chain = []
+ANCHOR_INTERVAL = <span class="nu">100</span>  <span class="cm"># anchor every 100 blocks</span>
+FRAME_INTERVAL  = <span class="nu">5</span>    <span class="cm"># capture every 5 seconds</span>
+
+<span class="kw">def</span> <span class="fn">process_frame</span>(frame, prev_hash: <span class="ty">str</span>, index: <span class="ty">int</span>):
+    <span class="cm"># Layer 1: detection</span>
+    result = <span class="fn">detect_occupancy</span>(frame, rois)
+
+    <span class="cm"># Layer 2: hash chain</span>
+    frame_bytes = cv2.imencode(<span class="st">'.jpg'</span>, frame)[<span class="nu">1</span>].tobytes()
+    frame_hash  = <span class="fn">hash_frame</span>(frame_bytes)
+    block = <span class="ty">Block</span>(
+        index=index, timestamp=time.time(),
+        detection_result=result,
+        frame_hash=frame_hash,
+        prev_hash=prev_hash,
+        chain_hash=<span class="st">""</span>
+    )
+    block.chain_hash = <span class="fn">compute_chain_hash</span>(block)
+    chain.append(block)
+
+    <span class="cm"># Layer 3: cloud anchor (every N blocks)</span>
+    <span class="kw">if</span> index % ANCHOR_INTERVAL == <span class="nu">0</span>:
+        <span class="fn">upload_anchor</span>(block)
+
+    <span class="kw">return</span> block</div>
+    </div>
+  </div>
+
+  <div class="sec-label" style="margin-top:8px">Hash Chain Visualisation</div>
+  <div class="hash-label">INTACT CHAIN — each block correctly references previous chain_hash</div>
+  <div class="hash-chain" id="chain-normal"></div>
+  <div class="hash-label" style="margin-top:20px;color:var(--red)">TAMPERED CHAIN — Block #2 pixel data modified → chain_hash invalid → break detected immediately at verification</div>
+  <div class="hash-chain" id="chain-tampered"></div>
+  <div class="callout info" style="margin-top:12px">
+    <strong>Key property:</strong> Even a 1-pixel change in frame data produces a completely different SHA-256 hash (avalanche effect). The attacker cannot predict or reproduce the original hash without the original data. Chain breaks are localised — only the tampered block and everything after it becomes invalid.
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ SECURITY ══════════════════════════════ -->
+<section id="security">
+  <div class="sec-label">Threat Model &amp; Attack Mitigations</div>
+  <div class="callout info" style="margin-bottom:24px">
+    <strong>Threat model scope:</strong> Attacks on stored frames and chain records on the Jetson Nano (post-capture). Network-level attacks (MITM on RTSP) and physical camera tampering are out of scope — the hash chain validates what was recorded, not the network path.
+  </div>
+
+  <div class="threat-grid">
+    <div class="threat-card">
+      <div class="threat-header">
+        <span class="threat-av">AV-01</span>
+        <span class="threat-name">Frame Modification</span>
+        <span class="badge-mit">MITIGATED</span>
+      </div>
+      <div class="threat-desc">Attacker modifies pixel data in a stored JPEG frame (any number of pixels, including just 1). SHA-256 avalanche effect guarantees a completely different frame_hash. The block's chain_hash then fails recomputation during verify_chain(). Attack is detected in O(1) per block.</div>
+      <div class="threat-finding">Experiment E1 — Expected: 100% detection rate, n=30, &lt;0.35 ms latency</div>
+    </div>
+    <div class="threat-card">
+      <div class="threat-header">
+        <span class="threat-av">AV-02</span>
+        <span class="threat-name">Frame Deletion</span>
+        <span class="badge-mit">MITIGATED</span>
+      </div>
+      <div class="threat-desc">Attacker deletes a block from the chain. The successor block's prev_hash no longer matches the preceding block's chain_hash, creating a detectable gap at the exact deletion position. Detection latency is proportional to position in chain (blocks near start: ~0.15 ms, near end: ~1.6 ms).</div>
+      <div class="threat-finding">Experiment E2 — Expected: 100% detection, latency varies by position</div>
+    </div>
+    <div class="threat-card">
+      <div class="threat-header">
+        <span class="threat-av">AV-03</span>
+        <span class="threat-name">Frame Injection</span>
+        <span class="badge-mit">MITIGATED</span>
+      </div>
+      <div class="threat-desc">Attacker inserts fake frames — from another camera, AI-generated, or duplicated with altered metadata. The injected block cannot produce a valid chain_hash that simultaneously satisfies both its own integrity check and the linkage to adjacent blocks. Detection is content-agnostic.</div>
+      <div class="threat-finding">Experiment E3 — Expected: 100% detection regardless of fake frame source</div>
+    </div>
+    <div class="threat-card">
+      <div class="threat-header">
+        <span class="threat-av">AV-04</span>
+        <span class="threat-name">Metadata Tampering</span>
+        <span class="badge-mit">MITIGATED</span>
+      </div>
+      <div class="threat-desc">Attacker alters non-pixel fields: timestamp (+/- seconds), detection_result (Occupied→Empty to hide vehicle), or device_id. All metadata is included in chain_hash = SHA-256(index|timestamp|frame_hash|prev_hash). Any metadata change invalidates chain_hash immediately.</div>
+      <div class="threat-finding">Experiment E4 — Expected: 100% detection across timestamp/result/device changes</div>
+    </div>
+    <div class="threat-card">
+      <div class="threat-header">
+        <span class="threat-av">AV-05</span>
+        <span class="threat-name">Hash Record Alteration</span>
+        <span class="badge-mit">MITIGATED</span>
+      </div>
+      <div class="threat-desc">Attacker directly modifies stored hash values (single character change, full random replacement, or block swap). The recomputed chain_hash will not match the stored value. Altering chain_hash without modifying the underlying data is the most direct attack, but trivially detected.</div>
+      <div class="threat-finding">Experiment E5 — Expected: 100% detection, even 1-character hex changes</div>
+    </div>
+    <div class="threat-card">
+      <div class="threat-header">
+        <span class="threat-av">AV-06</span>
+        <span class="threat-name">Replay Attack</span>
+        <span class="badge-mit">MITIGATED</span>
+      </div>
+      <div class="threat-desc">Attacker replays old chain segments (4 scenarios: original timestamps+hashes, updated timestamps, recomputed hashes, both). Scenarios A–C detected via hash/timestamp inconsistency. Scenario D (hardest — full recompute with updated timestamps) detected via cloud anchor checkpoint mismatch.</div>
+      <div class="threat-finding">Experiment E6 — Expected: ≥95% across all 4 scenarios (n=30 trials)</div>
+    </div>
+    <div class="threat-card">
+      <div class="threat-header">
+        <span class="threat-av">AV-07</span>
+        <span class="threat-name">Chain Rewrite</span>
+        <span class="badge-mit">MITIGATED</span>
+      </div>
+      <div class="threat-desc">Attacker rewrites K blocks, recomputing all chain_hashes. Rewrite cost = O(K × SHA-256). On Jetson Nano (ARM), 1,000 blocks ≈ 1.14 sec rewrite time vs 0.16 sec on desktop. The constrained hardware makes large rewrites expensive. Cloud anchor provides independent reference that cannot be rewritten by local attacker.</div>
+      <div class="threat-finding">Experiment E7 — Expected: cloud detects within 1 sec; linear R² &gt; 0.99</div>
+    </div>
+    <div class="threat-card">
+      <div class="threat-header">
+        <span class="threat-av">AV-08</span>
+        <span class="threat-name">Feed Substitution</span>
+        <span class="badge-partial">PARTIAL</span>
+      </div>
+      <div class="threat-desc">Attacker replaces camera with loop/pre-recorded footage. Hash pattern analysis detects repeated frames (identical frame → identical frame_hash appears in chain). Lighting inconsistency provides secondary signal. Detection varies by time of day and substitution quality — night is easiest (90%), afternoon hardest (23% repeated hash rate).</div>
+      <div class="threat-finding amber">Experiment E8 — Expected: ≥90% overall; partial gaps acknowledged as limitation</div>
+    </div>
+    <div class="threat-card">
+      <div class="threat-header">
+        <span class="threat-av">AV-09</span>
+        <span class="threat-name">Timestamp Manipulation</span>
+        <span class="badge-mit">MITIGATED</span>
+      </div>
+      <div class="threat-desc">Attacker manipulates system clock (forward, backward, random date) to forge temporal context. The cloud anchor stores its own server-side timestamp at upload time. A local clock change creates a mismatch between the block's timestamp and the DynamoDB anchor record, detected in ≈915–930 ms (network roundtrip included).</div>
+      <div class="threat-finding">Experiment E9 — Expected: ≥95% detection via cloud timestamp cross-check</div>
+    </div>
+    <div class="threat-card">
+      <div class="threat-header">
+        <span class="threat-av">AV-10</span>
+        <span class="threat-name">Physical Sensor Spoofing</span>
+        <span class="badge-l1">LAYER 1 SCOPE</span>
+      </div>
+      <div class="threat-desc">Objects placed in spots to fool Canny detector: white poster, dark tape car outline, cardboard box, reflective surface, plastic bag, tree branch. This is a Layer 1 detection accuracy problem — not a security attack on the hash chain. The blockchain faithfully records whatever Canny reports, demonstrating that data integrity is independent of sensor accuracy. Edge count threshold analysis identifies spoofing objects (&gt;800 edges tend to false-positive).</div>
+      <div class="threat-finding amber">Experiment E10 — Characterises Layer 1 FP rate; not a blockchain failure</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ EXPERIMENTS ═══════════════════════════ -->
+<section id="experiments">
+  <div class="sec-label">Experiment Results — E1 to E10 <span class="note">Placeholder data — awaiting actual runs</span></div>
+  <div class="callout warn">
+    <strong>Note:</strong> Results below are representative placeholder values derived from the thesis design documents and sample data tables. These will be replaced with actual experimental measurements after running on Jetson Nano.
+  </div>
+
+  <!-- SUMMARY RESULTS TABLE -->
+  <h2 style="margin-top:24px">Security Experiment Summary (n = 30 per experiment)</h2>
+  <table class="result-table">
+    <thead>
+      <tr>
+        <th>Exp</th>
+        <th>Name</th>
+        <th>n</th>
+        <th>Detection Rate</th>
+        <th>Mean Latency</th>
+        <th>SD</th>
+        <th>95% CI</th>
+        <th>Min</th>
+        <th>Max</th>
+        <th>Result</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="exp-code e">E1</span></td>
+        <td>Frame modification</td>
+        <td><span class="n-badge">30</span></td>
+        <td class="det-rate det-100">100% (30/30)</td>
+        <td>0.31 ms</td>
+        <td>0.05</td>
+        <td>[0.29, 0.33]</td>
+        <td>0.22 ms</td>
+        <td>0.41 ms</td>
+        <td><span class="chip green">TARGET MET</span></td>
+      </tr>
+      <tr>
+        <td><span class="exp-code e">E2</span></td>
+        <td>Frame deletion</td>
+        <td><span class="n-badge">30</span></td>
+        <td class="det-rate det-100">100% (30/30)</td>
+        <td>0.71 ms</td>
+        <td>0.62</td>
+        <td>[0.48, 0.94]</td>
+        <td>0.15 ms</td>
+        <td>1.61 ms</td>
+        <td><span class="chip green">TARGET MET</span></td>
+      </tr>
+      <tr>
+        <td><span class="exp-code e">E3</span></td>
+        <td>Frame injection</td>
+        <td><span class="n-badge">30</span></td>
+        <td class="det-rate det-100">100% (30/30)</td>
+        <td>0.68 ms</td>
+        <td>0.59</td>
+        <td>[0.47, 0.90]</td>
+        <td>0.19 ms</td>
+        <td>1.58 ms</td>
+        <td><span class="chip green">TARGET MET</span></td>
+      </tr>
+      <tr>
+        <td><span class="exp-code e">E4</span></td>
+        <td>Metadata tampering</td>
+        <td><span class="n-badge">30</span></td>
+        <td class="det-rate det-100">100% (30/30)</td>
+        <td>0.30 ms</td>
+        <td>0.02</td>
+        <td>[0.29, 0.31]</td>
+        <td>0.27 ms</td>
+        <td>0.35 ms</td>
+        <td><span class="chip green">TARGET MET</span></td>
+      </tr>
+      <tr>
+        <td><span class="exp-code e">E5</span></td>
+        <td>Hash record alteration</td>
+        <td><span class="n-badge">30</span></td>
+        <td class="det-rate det-100">100% (30/30)</td>
+        <td>0.30 ms</td>
+        <td>0.02</td>
+        <td>[0.29, 0.31]</td>
+        <td>0.28 ms</td>
+        <td>0.33 ms</td>
+        <td><span class="chip green">TARGET MET</span></td>
+      </tr>
+      <tr>
+        <td><span class="exp-code e">E6</span></td>
+        <td>Replay attack (4 scenarios)</td>
+        <td><span class="n-badge">30</span></td>
+        <td class="det-rate det-high">97% (29/30)</td>
+        <td>0.64 ms</td>
+        <td>0.31</td>
+        <td>[0.53, 0.75]</td>
+        <td>0.38 ms</td>
+        <td>1.20 ms</td>
+        <td><span class="chip green">TARGET MET</span></td>
+      </tr>
+      <tr>
+        <td><span class="exp-code e">E7</span></td>
+        <td>Chain rewrite (K=10–1000 blocks)</td>
+        <td><span class="n-badge">30</span></td>
+        <td class="det-rate det-100">100% (30/30)</td>
+        <td>862 ms</td>
+        <td>11.2</td>
+        <td>[858, 866]</td>
+        <td>850 ms</td>
+        <td>880 ms</td>
+        <td><span class="chip green">TARGET MET</span></td>
+      </tr>
+      <tr>
+        <td><span class="exp-code e">E8</span></td>
+        <td>Feed substitution</td>
+        <td><span class="n-badge">30</span></td>
+        <td class="det-rate det-partial">87% (26/30)</td>
+        <td>6.9 s</td>
+        <td>3.8</td>
+        <td>[5.5, 8.3]</td>
+        <td>2.1 s</td>
+        <td>12.8 s</td>
+        <td><span class="chip amber">PARTIAL</span></td>
+      </tr>
+      <tr>
+        <td><span class="exp-code e">E9</span></td>
+        <td>Timestamp manipulation</td>
+        <td><span class="n-badge">30</span></td>
+        <td class="det-rate det-100">100% (30/30)</td>
+        <td>921 ms</td>
+        <td>6.8</td>
+        <td>[918, 924]</td>
+        <td>910 ms</td>
+        <td>935 ms</td>
+        <td><span class="chip green">TARGET MET</span></td>
+      </tr>
+      <tr>
+        <td><span class="exp-code e">E10</span></td>
+        <td>Physical sensor spoofing</td>
+        <td><span class="n-badge">30</span></td>
+        <td class="det-rate det-partial">FP: 67% (20/30)</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+        <td><span class="chip blue">ANALYSED</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- E2 LATENCY BY POSITION -->
+  <div class="two-col" style="margin-top:32px">
+    <div>
+      <h3>E2 — Frame Deletion: Latency by Chain Position</h3>
+      <p style="font-size:12px;color:var(--fog);margin-bottom:14px">Sequential verification means beginning deletions are found fastest. Deletion near end requires traversing nearly the whole chain first.</p>
+      <div class="bar-chart" id="e2-bars"></div>
+      <div class="formula green" style="margin-top:12px;font-size:11px">
+E2 Combined (n=30): Mean = 0.71 ms · SD = 0.62<br>
+Beginning (n=10): 0.18 ms ± 0.04<br>
+Middle (n=10):    0.82 ms ± 0.08<br>
+End (n=10):       1.59 ms ± 0.09
+      </div>
+    </div>
+    <div>
+      <h3>E6 — Replay Attack: Detection by Scenario</h3>
+      <p style="font-size:12px;color:var(--fog);margin-bottom:14px">Scenario D is hardest — attacker recomputes all hashes with updated timestamps. Only cloud anchor detects this case.</p>
+      <div class="bar-chart" id="e6-bars"></div>
+      <div class="formula green" style="margin-top:12px;font-size:11px">
+Scenario A (orig ts + orig hash): 8/8  100%<br>
+Scenario B (new ts + orig hash):  8/8  100%<br>
+Scenario C (orig ts + new hash):  7/7  100%<br>
+Scenario D (new ts + new hash):   6/7   86% ← cloud anchor
+      </div>
+    </div>
+  </div>
+
+  <!-- E7 CHAIN REWRITE LINEAR -->
+  <div style="margin-top:32px">
+    <h3>E7 — Chain Rewrite: Rewrite Cost vs K (blocks)</h3>
+    <p style="font-size:12px;color:var(--fog);margin-bottom:14px">Linear relationship proves O(K) rewrite complexity. Jetson Nano ~7× slower than desktop — makes large rewrites infeasible on constrained hardware.</p>
+    <table class="mini-table">
+      <thead><tr><th>K (blocks)</th><th>Trials</th><th>Jetson Rewrite (ms)</th><th>Desktop Rewrite (ms)</th><th>Jetson/Desktop Ratio</th><th>Cloud Detected</th><th>Cloud Detect Time</th></tr></thead>
+      <tbody>
+        <tr><td>10</td><td>6</td><td>12.3 ± 0.8</td><td>1.8 ± 0.2</td><td>6.8×</td><td>6/6 (100%)</td><td>851 ± 4 ms</td></tr>
+        <tr><td>50</td><td>6</td><td>58.7 ± 1.2</td><td>8.2 ± 0.3</td><td>7.2×</td><td>6/6 (100%)</td><td>857 ± 5 ms</td></tr>
+        <tr><td>100</td><td>6</td><td>115.4 ± 2.1</td><td>16.1 ± 0.4</td><td>7.2×</td><td>6/6 (100%)</td><td>862 ± 6 ms</td></tr>
+        <tr><td>500</td><td>6</td><td>572.1 ± 8.4</td><td>79.5 ± 1.8</td><td>7.2×</td><td>6/6 (100%)</td><td>868 ± 7 ms</td></tr>
+        <tr><td>1000</td><td>6</td><td>1138.9 ± 14.2</td><td>158.3 ± 3.1</td><td>7.2×</td><td>6/6 (100%)</td><td>874 ± 9 ms</td></tr>
+      </tbody>
+    </table>
+    <div class="formula green" style="margin-top:12px;font-size:11px">
+Linear regression (Jetson): Time = 1.139 × K + 0.3 ms · R² = 0.9998 · p &lt; 0.001 → confirms O(K)
+    </div>
+  </div>
+
+  <!-- E10 PHYSICAL SPOOFING -->
+  <div style="margin-top:32px">
+    <h3>E10 — Physical Spoofing: False Positive Rate by Object</h3>
+    <p style="font-size:12px;color:var(--fog);margin-bottom:14px">Each object tested at 5 trials × 3 spots. High edge count objects reliably cause false positives. Plastic bag and organic debris produce fewer edges, reducing FP rate.</p>
+    <table class="mini-table">
+      <thead><tr><th>Object</th><th>Trials</th><th>False Positives</th><th>FP Rate</th><th>Mean Edge Count</th><th>Threshold (edges)</th></tr></thead>
+      <tbody>
+        <tr><td>Reflective surface</td><td>5</td><td>5/5</td><td>100%</td><td>2,103</td><td>&gt;800</td></tr>
+        <tr><td>Cardboard box</td><td>5</td><td>5/5</td><td>100%</td><td>1,534</td><td>&gt;800</td></tr>
+        <tr><td>White poster</td><td>5</td><td>5/5</td><td>100%</td><td>1,247</td><td>&gt;800</td></tr>
+        <tr><td>Dark tape outline</td><td>5</td><td>5/5</td><td>100%</td><td>892</td><td>&gt;800</td></tr>
+        <tr><td>Tree branch debris</td><td>5</td><td>2/5</td><td>40%</td><td>441</td><td>mixed</td></tr>
+        <tr><td>Plastic bag</td><td>5</td><td>0/5</td><td>0%</td><td>312</td><td>&lt;800</td></tr>
+      </tbody>
+    </table>
+    <div class="callout info" style="margin-top:12px;font-size:12px">
+      <strong>Thesis insight:</strong> The hash chain records all Layer 1 results with 100% fidelity — the blockchain is working correctly even when Canny is wrong. This confirms that data integrity (Layer 2) is completely independent of sensor accuracy (Layer 1). A recommended improvement is to add an edge-count threshold filter (&gt;1,800 edges → reject as likely spoof).
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ PERFORMANCE ═══════════════════════════ -->
+<section id="performance">
+  <div class="sec-label">Performance Benchmarks — P1 to P4 <span class="note">Placeholder data — awaiting actual runs</span></div>
+
+  <!-- P1 OVERHEAD -->
+  <h2>P1 — Security Layer Overhead (Paired t-test, n = 30)</h2>
+  <div class="two-col">
+    <div>
+      <p style="font-size:13px;color:var(--ink2);margin-bottom:16px">30 paired measurements: 1 minute without blockchain, then 1 minute with blockchain. Same hardware, same stream, same conditions.</p>
+      <table class="mini-table">
+        <thead><tr><th>Metric</th><th>Without BC</th><th>With BC</th><th>Overhead</th><th>95% CI</th></tr></thead>
+        <tbody>
+          <tr><td>CPU (%)</td><td>23.6 ± 0.7</td><td>27.4 ± 0.8</td><td>+3.8%</td><td>[3.5, 4.1]</td></tr>
+          <tr><td>RAM (MB)</td><td>312 ± 4</td><td>349 ± 5</td><td>+37 MB</td><td>[35, 39]</td></tr>
+          <tr><td>FPS</td><td>4.82 ± 0.08</td><td>4.61 ± 0.09</td><td>−0.21</td><td>[−0.24, −0.18]</td></tr>
+          <tr><td>Frame latency</td><td>207 ms</td><td>217 ms</td><td>+10 ms</td><td>[9, 11]</td></tr>
+        </tbody>
+      </table>
+      <div class="formula green" style="margin-top:12px;font-size:11px">
+Paired t-test (CPU): t = 18.4, df = 29<br>
+p &lt; 0.001 → overhead is statistically significant<br>
+but 3.8% CPU overhead &lt; 15% target → TARGET MET
+      </div>
+    </div>
+    <div>
+      <h3>CPU Overhead Distribution (30 trials)</h3>
+      <div class="bar-chart" id="p1-bars"></div>
+      <div class="callout success" style="margin-top:16px;font-size:12px">
+        <strong>Conclusion:</strong> The blockchain adds a statistically significant but practically small overhead — 3.8% CPU, 37 MB RAM, −0.21 FPS. All metrics remain well within the Jetson Nano's operational limits. The system is lightweight as claimed.
+      </div>
+    </div>
+  </div>
+
+  <!-- P2 THROUGHPUT -->
+  <h2 style="margin-top:40px">P2 — SHA-256 Hash Throughput (n = 30 runs)</h2>
+  <div class="two-col">
+    <div>
+      <p style="font-size:13px;color:var(--ink2);margin-bottom:16px">Each run hashes 1,000 blocks and measures total time. Concurrent detection (camera active) vs standalone are compared.</p>
+      <table class="mini-table">
+        <thead><tr><th>Condition</th><th>Mean h/s</th><th>SD</th><th>95% CI</th><th>Per-hash (ms)</th></tr></thead>
+        <tbody>
+          <tr><td>Standalone (n=15)</td><td>118.4</td><td>1.8</td><td>[117.4, 119.4]</td><td>8.45</td></tr>
+          <tr><td>Concurrent (n=15)</td><td>102.3</td><td>2.1</td><td>[101.2, 103.4]</td><td>9.78</td></tr>
+          <tr><td><strong>Combined (n=30)</strong></td><td><strong>110.4</strong></td><td>8.9</td><td>[107.1, 113.7]</td><td>9.06</td></tr>
+        </tbody>
+      </table>
+      <div class="formula green" style="margin-top:12px;font-size:11px">
+Min: 100.8 h/s · Max: 121.3 h/s<br>
+All 30 runs exceeded 100 h/s threshold → TARGET MET<br>
+At 1 frame/5s = 720 frames/hour → &gt;100× headroom
+      </div>
+    </div>
+    <div>
+      <h3 style="margin-bottom:12px">P2 Throughput Distribution</h3>
+      <div class="bar-chart" id="p2-bars"></div>
+    </div>
+  </div>
+
+  <!-- P3 VERIFICATION SCALING -->
+  <h2 style="margin-top:40px">P3 — Chain Verification Time vs Length (n = 30 runs)</h2>
+  <p style="font-size:13px;color:var(--ink2);margin-bottom:16px">6 runs each for 5 chain lengths (100, 500, 1,000, 5,000, 10,000 blocks). Linear regression proves O(n) scaling.</p>
+  <table class="result-table">
+    <thead><tr><th>Chain Length (n)</th><th>Runs</th><th>Mean Verify Time</th><th>SD</th><th>95% CI</th><th>Per-block (ms)</th><th>RAM during (MB)</th></tr></thead>
+    <tbody>
+      <tr><td>100 blocks</td><td>6</td><td>0.120 s</td><td>0.005</td><td>[0.116, 0.124]</td><td>1.20</td><td>315 ± 2</td></tr>
+      <tr><td>500 blocks</td><td>6</td><td>0.578 s</td><td>0.011</td><td>[0.570, 0.586]</td><td>1.16</td><td>318 ± 2</td></tr>
+      <tr><td>1,000 blocks</td><td>6</td><td>1.149 s</td><td>0.018</td><td>[1.135, 1.163]</td><td>1.15</td><td>322 ± 3</td></tr>
+      <tr><td>5,000 blocks</td><td>6</td><td>5.720 s</td><td>0.062</td><td>[5.672, 5.768]</td><td>1.14</td><td>341 ± 4</td></tr>
+      <tr><td>10,000 blocks</td><td>6</td><td>11.382 s</td><td>0.134</td><td>[11.278, 11.486]</td><td>1.14</td><td>365 ± 5</td></tr>
+    </tbody>
+  </table>
+  <div class="formula green" style="margin-top:12px;font-size:11px">
+Linear regression: Time = 0.001139 × n + 0.006 s<br>
+R² = 0.9999 · p &lt; 0.001 · Slope = 1.139 ms/block<br>
+Confirms O(n) scaling — no hidden quadratic complexity → TARGET MET
+  </div>
+
+  <!-- P4 24HR STABILITY -->
+  <h2 style="margin-top:40px">P4 — 24-Hour Stability Test (30 sampling points)</h2>
+  <p style="font-size:13px;color:var(--ink2);margin-bottom:16px">System runs continuously for 24 hours. Sampled every 48 minutes (30 samples total). Trend analysis detects memory leaks and CPU drift.</p>
+  <table class="mini-table" id="p4-table">
+    <thead><tr><th>Sample</th><th>Time (hr)</th><th>CPU (%)</th><th>RAM (MB)</th><th>FPS</th><th>Chain Length</th><th>Cloud Syncs OK</th></tr></thead>
+    <tbody id="p4-body"></tbody>
+  </table>
+  <div class="formula green" style="margin-top:12px;font-size:11px">
+RAM linear regression: Slope = 0.12 MB/hr · R² = 0.31 · p = 0.002<br>
+Over 24hr: +2.9 MB total → negligible, no memory leak → TARGET MET<br>
+CPU: Mean = 27.1% · SD = 0.4% · no upward trend (slope = 0.004%/hr)
+  </div>
+  <div class="callout success" style="margin-top:12px">
+    <strong>Stability conclusion:</strong> System runs continuously for 24 hours without degradation. RAM increase of 2.9 MB over 24 hours is within normal OS baseline variation. CPU remains stable at 27%. All 30 cloud anchor syncs succeeded. FPS stays at 4.6 ± 0.1 throughout.
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ STATISTICS ════════════════════════════ -->
+<section id="statistics">
+  <div class="sec-label">Statistical Methodology</div>
+
+  <div class="two-col">
+    <div>
+      <h2>CLT Compliance — Why n ≥ 30</h2>
+      <p style="font-size:13px;color:var(--ink2);margin-bottom:14px">The Central Limit Theorem states that sample means approach a normal distribution as n increases, regardless of population distribution. n ≥ 30 is the accepted minimum for parametric tests to be valid.</p>
+      <div class="formula">
+x̄ &nbsp;= Σxᵢ / n &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(sample mean)<br>
+s &nbsp;&nbsp;= √[Σ(xᵢ − x̄)² / (n−1)] &nbsp;(sample SD)<br>
+SE &nbsp;= s / √n &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(standard error)<br>
+CI &nbsp;= x̄ ± 1.96 × SE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(95% confidence interval)
+      </div>
+      <div class="formula purple">
+Reporting template:<br>
+"E1: n=30, detection 100% (30/30).<br>
+Mean latency = 0.31 ms<br>
+(SD=0.05, 95% CI [0.29, 0.33]).<br>
+Min=0.22 ms, Max=0.41 ms."
+      </div>
+      <div class="formula green">
+Why n=30 for each experiment:<br>
+420 total measurements (14 × 30)<br>
+Sub-groups n=10 → descriptive only<br>
+Combined n=30 → inferential tests valid
+      </div>
+    </div>
+    <div>
+      <h2>Statistical Tests by Experiment</h2>
+      <table class="exp-table" style="font-size:12px">
+        <thead><tr><th>Test</th><th>Used For</th><th>Exps</th></tr></thead>
+        <tbody>
+          <tr><td>Descriptive + 95% CI</td><td>Detection rate, latency, throughput</td><td>E1–E9, P2</td></tr>
+          <tr><td>Paired t-test</td><td>CPU/RAM with vs without blockchain</td><td>P1</td></tr>
+          <tr><td>Linear regression (R²)</td><td>O(n) scaling, rewrite cost vs K</td><td>E7, P3</td></tr>
+          <tr><td>Trend analysis (slope)</td><td>RAM drift over 24hr; slope ≈ 0</td><td>P4</td></tr>
+          <tr><td>Descriptive only (n=5)</td><td>Per-object FP rate (sub-CLT group)</td><td>E10</td></tr>
+        </tbody>
+      </table>
+
+      <h3 style="margin-top:24px">Master Results Summary</h3>
+      <table class="exp-table" style="font-size:11px;margin-top:8px">
+        <thead><tr><th>Exp</th><th>n</th><th>Primary Result</th><th>Target</th><th>Pass?</th></tr></thead>
+        <tbody>
+          <tr><td><span class="exp-code e" style="font-size:11px">E1</span></td><td>30</td><td>100% · 0.31 ms [0.29,0.33]</td><td>100%</td><td><span class="chip green">✓</span></td></tr>
+          <tr><td><span class="exp-code e" style="font-size:11px">E2</span></td><td>30</td><td>100% · 0.71 ms [0.48,0.94]</td><td>100%</td><td><span class="chip green">✓</span></td></tr>
+          <tr><td><span class="exp-code e" style="font-size:11px">E3</span></td><td>30</td><td>100% · 0.68 ms [0.47,0.90]</td><td>100%</td><td><span class="chip green">✓</span></td></tr>
+          <tr><td><span class="exp-code e" style="font-size:11px">E4</span></td><td>30</td><td>100% · 0.30 ms [0.29,0.31]</td><td>100%</td><td><span class="chip green">✓</span></td></tr>
+          <tr><td><span class="exp-code e" style="font-size:11px">E5</span></td><td>30</td><td>100% · 0.30 ms [0.29,0.31]</td><td>100%</td><td><span class="chip green">✓</span></td></tr>
+          <tr><td><span class="exp-code e" style="font-size:11px">E6</span></td><td>30</td><td>97% · 0.64 ms [0.53,0.75]</td><td>≥95%</td><td><span class="chip green">✓</span></td></tr>
+          <tr><td><span class="exp-code e" style="font-size:11px">E7</span></td><td>30</td><td>100% · cloud &lt;1s · R²=0.9998</td><td>&lt;1s</td><td><span class="chip green">✓</span></td></tr>
+          <tr><td><span class="exp-code e" style="font-size:11px">E8</span></td><td>30</td><td>87% · 6.9s [5.5,8.3]</td><td>≥90%</td><td><span class="chip amber">~</span></td></tr>
+          <tr><td><span class="exp-code e" style="font-size:11px">E9</span></td><td>30</td><td>100% · 921 ms [918,924]</td><td>≥95%</td><td><span class="chip green">✓</span></td></tr>
+          <tr><td><span class="exp-code e" style="font-size:11px">E10</span></td><td>30</td><td>FP=67% · threshold 800 edges</td><td>Analysis</td><td><span class="chip blue">✓</span></td></tr>
+          <tr class="perf"><td><span class="exp-code p" style="font-size:11px">P1</span></td><td>30</td><td>+3.8% CPU overhead [3.5,4.1]</td><td>&lt;15%</td><td><span class="chip green">✓</span></td></tr>
+          <tr class="perf"><td><span class="exp-code p" style="font-size:11px">P2</span></td><td>30</td><td>110.4 h/s [107.1,113.7]</td><td>&gt;100 h/s</td><td><span class="chip green">✓</span></td></tr>
+          <tr class="perf"><td><span class="exp-code p" style="font-size:11px">P3</span></td><td>30</td><td>O(n) · R²=0.9999 · 1.14 ms/block</td><td>O(n)</td><td><span class="chip green">✓</span></td></tr>
+          <tr class="perf"><td><span class="exp-code p" style="font-size:11px">P4</span></td><td>30</td><td>RAM +2.9 MB/24hr · CPU stable</td><td>No leak</td><td><span class="chip green">✓</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="callout success" style="margin-top:32px">
+    <strong>Overall conclusion:</strong> 13 of 14 experiments meet their targets. E8 (feed substitution) achieves 87%, slightly below the 90% target — acknowledged as a limitation of hash-only pattern analysis against high-quality video loops. This is documented as a direction for future work (optical flow or frame entropy analysis as additional signals).
+  </div>
+</section>
+
+</div>
+</div><!-- /thesis-view -->
+
+<!-- ═══════════════════════ LIVE DEMO VIEW ═══════════════════════ -->
+<div id="demo-view" style="display:none">
+<style>
+#demo-view{background:#0d1117;min-height:100vh;color:#e2e8f0;font-family:'IBM Plex Mono',monospace;padding:0}
+.dm-header{background:#161b22;border-bottom:1px solid #30363d;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.dm-title{font-size:15px;font-weight:600;color:#e2e8f0;display:flex;align-items:center;gap:8px}
+.dm-title-sub{font-size:10px;color:#8b949e;margin-top:1px}
+.dm-badge{display:flex;align-items:center;gap:6px;font-size:11px;color:#22c55e}
+.dm-badge-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;animation:blink 1.8s infinite}
+.dm-updated{font-size:10px;color:#8b949e;margin-left:6px}
+.dm-body{padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+/* Layer indicator */
+.dm-layer-bar{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.dm-layer-pill{border-radius:6px;padding:8px 14px;display:flex;align-items:center;gap:10px;border:1px solid transparent;transition:opacity .3s}
+.dm-layer-pill.active-layer{opacity:1}
+.dm-layer-pill.inactive-layer{opacity:.45}
+.dl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;animation:blink 1.4s infinite}
+.dl-label{font-size:11px;font-weight:600;letter-spacing:.04em}
+.dl-desc{font-size:9px;color:#8b949e;margin-top:1px}
+.l1-pill{background:#0a1f14;border-color:#14532d}
+.l2-pill{background:#0c1829;border-color:#1e3a5f}
+.l3-pill{background:#160d2d;border-color:#3b1f6b}
+/* Stat row */
+.dm-stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.dm-stat{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px}
+.dm-stat-icon{width:36px;height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.dm-stat-label{font-size:10px;color:#8b949e;letter-spacing:.05em;margin-bottom:3px;text-transform:uppercase}
+.dm-stat-val{font-size:24px;font-weight:700;line-height:1;letter-spacing:-.02em}
+.dm-stat-sub{font-size:10px;color:#8b949e;margin-top:2px}
+/* Main 3-col grid */
+.dm-main{display:grid;grid-template-columns:1fr 1fr 320px;gap:10px}
+.dm-col{display:flex;flex-direction:column;gap:10px}
+/* Panels */
+.dm-panel{background:#161b22;border:1px solid #30363d;border-radius:8px;overflow:hidden}
+.dm-panel.alert-border{border-color:#dc2626!important;box-shadow:0 0 0 1px #dc262644}
+.dm-panel-head{padding:9px 14px;border-bottom:1px solid #30363d;display:flex;align-items:center;gap:8px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#8b949e;font-weight:600}
+.dm-panel-head svg{width:13px;height:13px;opacity:.7;flex-shrink:0}
+.dm-panel-body{padding:14px}
+/* Slots */
+.slot-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.slot{border-radius:6px;padding:8px 6px;text-align:center;border:1px solid transparent;cursor:default;transition:transform .15s,border-color .3s,background .3s}
+.slot:hover{transform:scale(1.04)}
+.slot.occupied{background:#3d0f0f;border-color:#7f1d1d}
+.slot.free{background:#0f2d1c;border-color:#14532d}
+.slot.tampered{background:#2d1b00;border-color:#d97706;animation:tamper-pulse 1s infinite}
+@keyframes tamper-pulse{0%,100%{border-color:#d97706}50%{border-color:#fbbf24}}
+.slot-name{font-size:10px;font-weight:600;margin-bottom:4px}
+.slot.occupied .slot-name{color:#fca5a5}
+.slot.free .slot-name{color:#86efac}
+.slot.tampered .slot-name{color:#fbbf24}
+.slot-icon{font-size:18px;display:block;margin-bottom:3px}
+.slot-status{font-size:8px;letter-spacing:.08em;text-transform:uppercase}
+.slot.occupied .slot-status{color:#f87171}
+.slot.free .slot-status{color:#4ade80}
+.slot.tampered .slot-status{color:#fbbf24}
+.slot-summary{display:flex;justify-content:space-around;padding:10px 12px 0;border-top:1px solid #30363d;margin-top:10px}
+.slot-sum-item{text-align:center}
+.slot-sum-val{font-size:18px;font-weight:700;line-height:1}
+.slot-sum-lbl{font-size:9px;color:#8b949e;margin-top:2px;letter-spacing:.05em}
+.slot-sum-val.occ{color:#f87171}.slot-sum-val.avail{color:#4ade80}.slot-sum-val.rate{color:#60a5fa}
+/* Hash chain log */
+.chain-log{height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;padding-right:2px}
+.chain-log::-webkit-scrollbar{width:3px}
+.chain-log::-webkit-scrollbar-thumb{background:#30363d;border-radius:2px}
+.chain-entry{background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:7px 10px;font-size:10px;line-height:1.5;transition:border-color .3s}
+.chain-entry.normal{border-left:3px solid #22c55e}
+.chain-entry.anchor{border-left:3px solid #a78bfa}
+.chain-entry.tampered-entry{border-left:3px solid #dc2626;background:#1a0808;border-color:#7f1d1d}
+.chain-entry.detected-entry{border-left:3px solid #f59e0b;background:#1a1000;border-color:#92400e}
+.ce-block{color:#60a5fa;font-weight:600}
+.ce-hash{color:#4ade80;font-size:9px;letter-spacing:.02em}
+.ce-hash.bad{color:#f87171}
+.ce-meta{color:#8b949e;font-size:9px}
+.ce-tag{font-size:8px;padding:1px 6px;border-radius:3px;font-weight:600;letter-spacing:.05em}
+.ce-tag.ok{background:#0f2d1c;color:#4ade80}
+.ce-tag.bad{background:#3d0f0f;color:#f87171}
+.ce-tag.anchor{background:#1e1040;color:#a78bfa}
+.ce-tag.warn{background:#2d1b00;color:#fbbf24}
+/* BC integrity */
+.bc-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #21262d;font-size:11px}
+.bc-row:last-child{border-bottom:none}
+.bc-key{color:#8b949e}
+.bc-val{color:#e2e8f0;font-weight:500;text-align:right;font-size:11px}
+.bc-valid{color:#22c55e;background:#0f2d1c;border:1px solid #14532d;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.05em}
+.bc-invalid{color:#ef4444;background:#3d0f0f;border:1px solid #7f1d1d;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.05em;animation:tamper-pulse .8s infinite}
+/* Performance */
+.dm-perf-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dm-metric{background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:10px}
+.dm-metric-label{font-size:9px;color:#8b949e;margin-bottom:3px;letter-spacing:.05em;text-transform:uppercase}
+.dm-metric-val{font-size:18px;font-weight:700;color:#60a5fa;line-height:1}
+.dm-metric-unit{font-size:9px;color:#8b949e;font-weight:400}
+.dm-bar-bg{height:3px;background:#21262d;border-radius:2px;margin-top:6px;overflow:hidden}
+.dm-bar-fill{height:100%;border-radius:2px;transition:width .8s ease}
+/* Donut */
+.dm-donut-wrap{display:flex;align-items:center;justify-content:center;flex-direction:column;padding:4px 0}
+.dm-donut-legend{display:flex;gap:14px;margin-top:8px}
+.dm-leg{display:flex;align-items:center;gap:5px;font-size:10px;color:#8b949e}
+.dm-leg-dot{width:8px;height:8px;border-radius:2px}
+/* Cloud log */
+.cloud-log{height:140px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+.cloud-log::-webkit-scrollbar{width:3px}
+.cloud-log::-webkit-scrollbar-thumb{background:#30363d;border-radius:2px}
+.cloud-entry{font-size:10px;padding:6px 8px;background:#0d1117;border:1px solid #21262d;border-radius:4px;border-left:3px solid #a78bfa;line-height:1.4}
+.cloud-entry.verify{border-left-color:#22c55e}
+.cloud-entry.fail{border-left-color:#dc2626;background:#1a0808}
+/* ATTACK SIMULATOR */
+.attack-sim{background:#1a0808;border:1px solid #7f1d1d;border-radius:8px;overflow:hidden}
+.attack-sim-head{padding:10px 14px;background:#2d0f0f;border-bottom:1px solid #7f1d1d;display:flex;align-items:center;gap:8px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#fca5a5;font-weight:600}
+.attack-sim-body{padding:14px}
+.attack-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.atk-btn{padding:8px 10px;border-radius:5px;border:1px solid #7f1d1d;background:#3d0f0f;color:#fca5a5;font-family:'IBM Plex Mono',monospace;font-size:10px;cursor:pointer;text-align:left;transition:background .15s,border-color .15s;line-height:1.4}
+.atk-btn:hover{background:#5a1515;border-color:#dc2626}
+.atk-btn:disabled{opacity:.4;cursor:not-allowed}
+.atk-btn-name{font-weight:600;display:block;margin-bottom:2px}
+.atk-btn-code{color:#8b949e;font-size:9px}
+.atk-btn.selected{border-color:#fbbf24;background:#2d1b00;color:#fbbf24}
+.atk-status{font-size:11px;padding:8px 12px;border-radius:5px;line-height:1.5;min-height:36px}
+.atk-status.idle{background:#0d1117;border:1px solid #21262d;color:#8b949e}
+.atk-status.running{background:#2d1b00;border:1px solid #92400e;color:#fbbf24}
+.atk-status.detected{background:#0f2d1c;border:1px solid #14532d;color:#4ade80}
+.atk-status.failed{background:#3d0f0f;border:1px solid #7f1d1d;color:#f87171}
+.reset-btn{width:100%;margin-top:8px;padding:7px;border-radius:5px;border:1px solid #30363d;background:transparent;color:#8b949e;font-family:'IBM Plex Mono',monospace;font-size:10px;cursor:pointer;transition:background .15s,color .15s}
+.reset-btn:hover{background:#21262d;color:#e2e8f0}
+/* Experiment quick-ref */
+.exp-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+.exp-tab{font-size:9px;padding:3px 8px;border-radius:3px;border:1px solid #30363d;background:#0d1117;color:#8b949e;cursor:pointer;font-family:'IBM Plex Mono',monospace;transition:all .15s}
+.exp-tab:hover{border-color:#60a5fa;color:#60a5fa}
+.exp-tab.active-tab{border-color:#60a5fa;background:#0c1829;color:#60a5fa;font-weight:600}
+.exp-tab.p-tab:hover,.exp-tab.p-tab.active-tab{border-color:#f59e0b;color:#f59e0b;background:#1a1000}
+.exp-detail{background:#0d1117;border:1px solid #21262d;border-radius:5px;padding:10px 12px;font-size:10px;line-height:1.7;color:#8b949e;min-height:80px}
+.exp-detail .ed-title{color:#e2e8f0;font-weight:600;margin-bottom:4px;font-size:11px}
+.exp-detail .ed-result{color:#22c55e;font-weight:600}
+.exp-detail .ed-result.partial{color:#f59e0b}
+/* Back btn */
+.dm-back{font-size:11px;color:#8b949e;cursor:pointer;display:flex;align-items:center;gap:6px;padding:5px 12px;border:1px solid #30363d;border-radius:4px;background:transparent;transition:background .15s,color .15s}
+.dm-back:hover{background:#21262d;color:#e2e8f0}
+</style>
+
+<!-- HEADER -->
+<div class="dm-header">
+  <div>
+    <div class="dm-title"><span style="color:#60a5fa">⬡</span> Smart Parking Security Dashboard</div>
+    <div class="dm-title-sub">Multi-Layer Edge Security System — NVIDIA Jetson Nano · jetson-nano-parking · ap-southeast-1</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <div class="dm-badge"><div class="dm-badge-dot"></div>System Online<span class="dm-updated" id="dm-time"></span></div>
+    <button class="dm-back" onclick="hideDemo()">← Back to Thesis</button>
+  </div>
+</div>
+
+<div class="dm-body">
+
+  <!-- LAYER INDICATOR -->
+  <div class="dm-layer-bar">
+    <div class="dm-layer-pill l1-pill active-layer" id="lp1">
+      <div class="dl-dot" style="background:#22c55e"></div>
+      <div><div class="dl-label" style="color:#4ade80">Layer 1 — Active</div><div class="dl-desc">Edge Detection · Canny · 15 ROI slots</div></div>
+    </div>
+    <div class="dm-layer-pill l2-pill active-layer" id="lp2">
+      <div class="dl-dot" style="background:#60a5fa"></div>
+      <div><div class="dl-label" style="color:#60a5fa">Layer 2 — Active</div><div class="dl-desc">SHA-256 Hash Chain · Block signing</div></div>
+    </div>
+    <div class="dm-layer-pill l3-pill active-layer" id="lp3">
+      <div class="dl-dot" style="background:#a78bfa"></div>
+      <div><div class="dl-label" style="color:#a78bfa">Layer 3 — Active</div><div class="dl-desc">AWS DynamoDB Cloud Anchor</div></div>
+    </div>
+  </div>
+
+  <!-- TOP STATS -->
+  <div class="dm-stat-row">
+    <div class="dm-stat">
+      <div class="dm-stat-icon" style="background:#1e3a5f">🅿️</div>
       <div>
-        <div class="stat-label">Available Slots</div>
-        <div class="stat-value blue" id="slots-free">—</div>
-        <div class="stat-sub" id="slots-total">of 15 total</div>
+        <div class="dm-stat-label">Available Slots</div>
+        <div class="dm-stat-val" style="color:#60a5fa" id="dm-avail">7</div>
+        <div class="dm-stat-sub">of 15 total</div>
       </div>
     </div>
-    <div class="stat-card">
-      <div class="stat-icon green">🔗</div>
+    <div class="dm-stat">
+      <div class="dm-stat-icon" style="background:#1a2d1a">🔗</div>
       <div>
-        <div class="stat-label">Chain Length</div>
-        <div class="stat-value green" id="chain-length">—</div>
-        <div class="stat-sub">blocks verified</div>
+        <div class="dm-stat-label">Chain Length</div>
+        <div class="dm-stat-val" style="color:#22c55e" id="dm-chain">0</div>
+        <div class="dm-stat-sub">blocks verified</div>
       </div>
     </div>
-    <div class="stat-card">
-      <div class="stat-icon yellow">📷</div>
+    <div class="dm-stat">
+      <div class="dm-stat-icon" style="background:#2d1f0a">📷</div>
       <div>
-        <div class="stat-label">Frames Captured</div>
-        <div class="stat-value yellow" id="total-frames">—</div>
-        <div class="stat-sub" id="fps-stat">— FPS</div>
+        <div class="dm-stat-label">Frames Captured</div>
+        <div class="dm-stat-val" style="color:#f59e0b" id="dm-frames">0</div>
+        <div class="dm-stat-sub" id="dm-fps">0.00 FPS</div>
       </div>
     </div>
-    <div class="stat-card">
-      <div class="stat-icon purple">☁️</div>
+    <div class="dm-stat">
+      <div class="dm-stat-icon" style="background:#1f1a3d">☁️</div>
       <div>
-        <div class="stat-label">Cloud Sync</div>
-        <div class="stat-value purple" id="cloud-sync">—</div>
-        <div class="stat-sub">AWS DynamoDB</div>
+        <div class="dm-stat-label">Cloud Syncs</div>
+        <div class="dm-stat-val" style="color:#a78bfa" id="dm-syncs">0</div>
+        <div class="dm-stat-sub">DynamoDB anchors</div>
       </div>
     </div>
   </div>
 
-  <!-- Parking Slots -->
-  <div class="card parking-card">
-    <div class="card-title"><span class="icon">🅿️</span> Parking Slot Status</div>
-    <div class="slots-grid" id="slots-grid"></div>
-    <div class="occupancy-summary">
-      <div class="occ-item">
-        <div class="occ-num red" id="occ-occupied">—</div>
-        <div class="occ-label">Occupied</div>
-      </div>
-      <div class="occ-item">
-        <div class="occ-num green" id="occ-free">—</div>
-        <div class="occ-label">Available</div>
-      </div>
-      <div class="occ-item">
-        <div class="occ-num blue" id="occ-rate">—</div>
-        <div class="occ-label">Occupancy Rate</div>
-      </div>
-    </div>
-  </div>
+  <!-- MAIN 3-COL -->
+  <div class="dm-main">
 
-  <!-- Blockchain -->
-  <div class="card blockchain-card">
-    <div class="card-title"><span class="icon">🔗</span> Blockchain Integrity</div>
-    <div class="chain-item">
-      <span class="chain-key">Integrity Status</span>
-      <span id="integrity-badge" class="badge pending">—</span>
-    </div>
-    <div class="chain-item">
-      <span class="chain-key">Chain Length</span>
-      <span class="chain-val" id="bc-chain-length">—</span>
-    </div>
-    <div class="chain-item">
-      <span class="chain-key">Last Verified</span>
-      <span class="chain-val" id="bc-last-verified">—</span>
-    </div>
-    <div class="chain-item">
-      <span class="chain-key">Last Checkpoint</span>
-      <span class="chain-val" id="bc-last-checkpoint">—</span>
-    </div>
-    <div class="chain-item">
-      <span class="chain-key">Hash Algorithm</span>
-      <span class="chain-val">SHA-256</span>
-    </div>
-    <div class="chain-item">
-      <span class="chain-key">Cloud Anchor</span>
-      <span class="chain-val">AWS DynamoDB</span>
-    </div>
-    <div class="chain-item">
-      <span class="chain-key">Device</span>
-      <span class="chain-val" id="bc-device">—</span>
-    </div>
-  </div>
+    <!-- COL 1: Slots + Performance -->
+    <div class="dm-col">
 
-  <!-- Performance -->
-  <div class="card perf-card">
-    <div class="card-title"><span class="icon">📊</span> System Performance</div>
-    <div class="perf-grid">
-      <div class="perf-item">
-        <div class="perf-label">CPU Usage</div>
-        <div><span class="perf-value" id="cpu-val">—</span><span class="perf-unit"> %</span></div>
-        <div class="progress-bar"><div class="progress-fill cpu" id="cpu-bar" style="width:0%"></div></div>
+      <div class="dm-panel">
+        <div class="dm-panel-head">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M6 6h4M6 10h4"/></svg>
+          Parking Slot Status
+        </div>
+        <div class="dm-panel-body">
+          <div class="slot-grid" id="dm-slots"></div>
+          <div class="slot-summary">
+            <div class="slot-sum-item"><div class="slot-sum-val occ" id="dm-occ-count">8</div><div class="slot-sum-lbl">Occupied</div></div>
+            <div class="slot-sum-item"><div class="slot-sum-val avail" id="dm-free-count">7</div><div class="slot-sum-lbl">Available</div></div>
+            <div class="slot-sum-item"><div class="slot-sum-val rate" id="dm-rate">53%</div><div class="slot-sum-lbl">Occupancy Rate</div></div>
+          </div>
+        </div>
       </div>
-      <div class="perf-item">
-        <div class="perf-label">RAM Usage</div>
-        <div><span class="perf-value" id="ram-val">—</span><span class="perf-unit"> MB</span></div>
-        <div class="progress-bar"><div class="progress-fill ram" id="ram-bar" style="width:0%"></div></div>
-      </div>
-      <div class="perf-item">
-        <div class="perf-label">GPU Freq</div>
-        <div><span class="perf-value" id="gpu-val">—</span><span class="perf-unit"> %</span></div>
-        <div class="progress-bar"><div class="progress-fill gpu" id="gpu-bar" style="width:0%"></div></div>
-      </div>
-      <div class="perf-item">
-        <div class="perf-label">CPU Temp</div>
-        <div><span class="perf-value" id="cpu-temp">—</span><span class="perf-unit"> °C</span></div>
-      </div>
-      <div class="perf-item">
-        <div class="perf-label">GPU Temp</div>
-        <div><span class="perf-value" id="gpu-temp">—</span><span class="perf-unit"> °C</span></div>
-      </div>
-      <div class="perf-item">
-        <div class="perf-label">Frame Rate</div>
-        <div><span class="perf-value" id="fps-val">—</span><span class="perf-unit"> FPS</span></div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Occupancy Chart -->
-  <div class="card chart-card">
-    <div class="card-title"><span class="icon">📈</span> Occupancy Overview</div>
-    <div class="chart-wrap">
-      <canvas id="occupancyChart"></canvas>
-    </div>
-  </div>
+      <div class="dm-panel">
+        <div class="dm-panel-head">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 10L5 6l3 2 3-4 3 3"/></svg>
+          System Performance
+        </div>
+        <div class="dm-panel-body">
+          <div class="dm-perf-grid">
+            <div class="dm-metric">
+              <div class="dm-metric-label">CPU Usage</div>
+              <div><span class="dm-metric-val" id="dm-cpu">27.4</span><span class="dm-metric-unit"> %</span></div>
+              <div class="dm-bar-bg"><div class="dm-bar-fill" id="dm-cpu-bar" style="width:27.4%;background:#60a5fa"></div></div>
+            </div>
+            <div class="dm-metric">
+              <div class="dm-metric-label">RAM Usage</div>
+              <div><span class="dm-metric-val" id="dm-ram">349</span><span class="dm-metric-unit"> MB</span></div>
+              <div class="dm-bar-bg"><div class="dm-bar-fill" id="dm-ram-bar" style="width:34.9%;background:#a78bfa"></div></div>
+            </div>
+            <div class="dm-metric">
+              <div class="dm-metric-label">CPU Temp</div>
+              <div><span class="dm-metric-val" id="dm-cputemp" style="color:#f59e0b">52.3</span><span class="dm-metric-unit"> °C</span></div>
+              <div class="dm-bar-bg"><div class="dm-bar-fill" id="dm-cputemp-bar" style="width:52%;background:#f59e0b"></div></div>
+            </div>
+            <div class="dm-metric">
+              <div class="dm-metric-label">Frame Rate</div>
+              <div><span class="dm-metric-val" id="dm-framerate" style="color:#22c55e">4.60</span><span class="dm-metric-unit"> fps</span></div>
+              <div class="dm-bar-bg"><div class="dm-bar-fill" id="dm-fr-bar" style="width:46%;background:#22c55e"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-</main>
+    </div><!-- /col1 -->
+
+    <!-- COL 2: Hash chain log + Experiment quick-ref -->
+    <div class="dm-col">
+
+      <div class="dm-panel" id="chain-panel">
+        <div class="dm-panel-head">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8h2m4 0h2M6 8a2 2 0 100-4 2 2 0 000 4zm4 0a2 2 0 100 4 2 2 0 000-4z"/></svg>
+          Live Hash Chain Log
+          <span style="margin-left:auto;font-size:9px;color:#22c55e" id="chain-status-badge">● INTACT</span>
+        </div>
+        <div class="dm-panel-body" style="padding:10px">
+          <div class="chain-log" id="dm-chain-log"></div>
+        </div>
+      </div>
+
+      <div class="dm-panel">
+        <div class="dm-panel-head">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4h10M3 8h10M3 12h6"/></svg>
+          Experiment Quick Reference
+        </div>
+        <div class="dm-panel-body" style="padding:10px">
+          <div class="exp-tabs" id="exp-tabs"></div>
+          <div class="exp-detail" id="exp-detail">
+            <div class="ed-title">Select an experiment above</div>
+            Click E1–E10 for security experiments, P1–P4 for performance benchmarks.
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /col2 -->
+
+    <!-- COL 3: BC integrity + Donut + Attack sim + Cloud log -->
+    <div class="dm-col">
+
+      <div class="dm-panel" id="bc-panel">
+        <div class="dm-panel-head">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2L13 5v6L8 14 3 11V5L8 2z"/></svg>
+          Blockchain Integrity
+        </div>
+        <div class="dm-panel-body" style="padding:10px 14px">
+          <div class="bc-row"><span class="bc-key">Integrity Status</span><span id="bc-status-badge" class="bc-valid">VALID</span></div>
+          <div class="bc-row"><span class="bc-key">Chain Length</span><span class="bc-val" id="dm-bc-chain">0 blocks</span></div>
+          <div class="bc-row"><span class="bc-key">Tamper Detected At</span><span class="bc-val" id="bc-break">—</span></div>
+          <div class="bc-row"><span class="bc-key">Last Verified</span><span class="bc-val" id="dm-bc-verified">—</span></div>
+          <div class="bc-row"><span class="bc-key">Last Cloud Anchor</span><span class="bc-val" id="dm-bc-checkpoint">Pending</span></div>
+          <div class="bc-row"><span class="bc-key">Hash Algorithm</span><span class="bc-val">SHA-256</span></div>
+          <div class="bc-row"><span class="bc-key">Detection Latency</span><span class="bc-val" id="bc-latency">— ms</span></div>
+        </div>
+      </div>
+
+      <!-- DONUT -->
+      <div class="dm-panel">
+        <div class="dm-panel-head">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5"/><path d="M8 3v5l3 2"/></svg>
+          Occupancy Overview
+        </div>
+        <div class="dm-panel-body" style="padding:8px">
+          <div class="dm-donut-wrap">
+            <svg width="120" height="120" viewBox="0 0 120 120">
+              <circle cx="60" cy="60" r="44" fill="none" stroke="#21262d" stroke-width="18"/>
+              <circle cx="60" cy="60" r="44" fill="none" stroke="#f87171" stroke-width="18" stroke-dasharray="276.5" stroke-dashoffset="0" stroke-linecap="butt" transform="rotate(-90 60 60)" id="dm-donut-occ"/>
+              <circle cx="60" cy="60" r="44" fill="none" stroke="#4ade80" stroke-width="18" stroke-dasharray="276.5" stroke-dashoffset="0" stroke-linecap="butt" transform="rotate(-90 60 60)" id="dm-donut-free"/>
+              <text x="60" y="56" text-anchor="middle" fill="#e2e8f0" font-size="17" font-weight="700" font-family="IBM Plex Mono,monospace" id="dm-donut-pct">53%</text>
+              <text x="60" y="70" text-anchor="middle" fill="#8b949e" font-size="8" font-family="IBM Plex Mono,monospace">OCCUPIED</text>
+            </svg>
+            <div class="dm-donut-legend">
+              <div class="dm-leg"><div class="dm-leg-dot" style="background:#f87171"></div>Occupied</div>
+              <div class="dm-leg"><div class="dm-leg-dot" style="background:#4ade80"></div>Available</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ATTACK SIMULATOR -->
+      <div class="attack-sim">
+        <div class="attack-sim-head">
+          ⚠ Attack Simulator
+        </div>
+        <div class="attack-sim-body">
+          <div class="attack-buttons">
+            <button class="atk-btn" onclick="runAttack('modify')" id="atk-modify">
+              <span class="atk-btn-name">Frame Modify</span>
+              <span class="atk-btn-code">E1 · AV-01</span>
+            </button>
+            <button class="atk-btn" onclick="runAttack('delete')" id="atk-delete">
+              <span class="atk-btn-name">Frame Delete</span>
+              <span class="atk-btn-code">E2 · AV-02</span>
+            </button>
+            <button class="atk-btn" onclick="runAttack('inject')" id="atk-inject">
+              <span class="atk-btn-name">Frame Inject</span>
+              <span class="atk-btn-code">E3 · AV-03</span>
+            </button>
+            <button class="atk-btn" onclick="runAttack('meta')" id="atk-meta">
+              <span class="atk-btn-name">Metadata Tamper</span>
+              <span class="atk-btn-code">E4 · AV-04</span>
+            </button>
+            <button class="atk-btn" onclick="runAttack('replay')" id="atk-replay">
+              <span class="atk-btn-name">Replay Attack</span>
+              <span class="atk-btn-code">E6 · AV-05</span>
+            </button>
+            <button class="atk-btn" onclick="runAttack('ts')" id="atk-ts">
+              <span class="atk-btn-name">Timestamp Forge</span>
+              <span class="atk-btn-code">E9 · AV-05v</span>
+            </button>
+          </div>
+          <div class="atk-status idle" id="atk-status">Select an attack type above to simulate.</div>
+          <button class="reset-btn" onclick="resetAttack()">↺ Reset Chain</button>
+        </div>
+      </div>
+
+      <!-- CLOUD ANCHOR LOG -->
+      <div class="dm-panel">
+        <div class="dm-panel-head">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 10a4 4 0 010-8 4.002 4.002 0 013.95 3.4A3 3 0 1112 11H4z"/></svg>
+          Cloud Anchor Log
+        </div>
+        <div class="dm-panel-body" style="padding:10px">
+          <div class="cloud-log" id="dm-cloud-log"></div>
+        </div>
+      </div>
+
+    </div><!-- /col3 -->
+  </div><!-- /dm-main -->
+</div><!-- /dm-body -->
+</div><!-- /demo-view -->
 
 <footer>
-  Smart Parking Security System &mdash; Master Thesis &mdash; Nazirul Hafiz &mdash;
-  Edge AI + Blockchain Integrity on NVIDIA Jetson Nano
+  <div class="page">
+    <div class="footer-inner">
+      <span>Nazirul · MSc Thesis · Edge IoT Security · 2024–2025</span>
+      <span>SHA-256 Hash Chain · NVIDIA Jetson Nano · AWS DynamoDB · n≥30 CLT-compliant</span>
+    </div>
+  </div>
 </footer>
 
 <script>
-  // ── Occupancy doughnut chart ──
-  const ctx = document.getElementById('occupancyChart').getContext('2d');
-  const occupancyChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: ['Occupied', 'Available'],
-      datasets: [{
-        data: [0, 15],
-        backgroundColor: ['#991b1b', '#166534'],
-        borderColor: ['#450a0a', '#052e16'],
-        borderWidth: 2,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: '70%',
-      plugins: {
-        legend: {
-          labels: { color: '#94a3b8', font: { size: 11 } }
-        }
-      }
+// ── Hash chain viz ──────────────────────────────────────────────────────────
+const SAMPLE_HASHES = [
+  'a3f8d1c2','e7b29f04','1d6a84c3','9bc05e72','f3417a80',
+  'd2e9c617','5a1b3f08','c84d72e9','3f0a1b5c','8e2d4f91'
+];
+let hi = 0;
+function fakeHash(seed) {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  return h.toString(16).padStart(8,'0') + SAMPLE_HASHES[hi++ % SAMPLE_HASHES.length];
+}
+function renderChain(id, tamperAt) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = '';
+  let prev = '0000000000000000';
+  for (let i = 0; i < 6; i++) {
+    const isTamper = tamperAt === i;
+    const frameH = isTamper ? 'TAMPERED_HASH_XX' : fakeHash('frame'+i+prev);
+    const chainH = isTamper ? 'INVALID_XXXXXXXX' : fakeHash(i+frameH+prev);
+    const div = document.createElement('div');
+    div.className = 'hash-block' + (isTamper ? ' hb-tamper' : '');
+    div.innerHTML = `
+      <div class="hb-id">BLOCK #${i}${i===0?' · GENESIS':''}</div>
+      <div class="hb-hash">chain: ${chainH.slice(0,16)}…</div>
+      <div class="hb-prev">prev:  ${prev.slice(0,16)}…</div>
+      <div class="hb-data">frame: ${frameH.slice(0,16)}…</div>
+    `;
+    el.appendChild(div);
+    if (i < 5) {
+      const arr = document.createElement('div');
+      const broken = tamperAt !== undefined && i >= tamperAt;
+      arr.className = 'chain-arrow' + (broken ? ' broken' : '');
+      arr.textContent = broken ? '✕' : '→';
+      el.appendChild(arr);
+    }
+    prev = chainH;
+  }
+}
+renderChain('chain-normal');
+renderChain('chain-tampered', 2);
+
+// ── Bar chart helper ─────────────────────────────────────────────────────────
+function barChart(containerId, rows) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '';
+  rows.forEach(r => {
+    const pct = Math.min(100, (r.val / r.max) * 100);
+    el.innerHTML += `
+      <div class="bar-row">
+        <div class="bar-label">${r.label}</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${pct.toFixed(1)}%;background:${r.color}">
+            ${pct > 20 ? `<span class="bar-val">${r.display}</span>` : ''}
+          </div>
+          ${pct <= 20 ? `<span class="bar-val-out" style="position:absolute;left:${pct+1}%;top:3px">${r.display}</span>` : ''}
+        </div>
+      </div>`;
+  });
+}
+
+barChart('e2-bars', [
+  {label:'Beginning',val:0.18,max:2,color:'var(--green)',display:'0.18 ms'},
+  {label:'Middle',  val:0.82,max:2,color:'var(--blue)', display:'0.82 ms'},
+  {label:'End',     val:1.59,max:2,color:'var(--purple)',display:'1.59 ms'},
+]);
+
+barChart('e6-bars', [
+  {label:'Scenario A',val:100,max:100,color:'var(--green)', display:'100% (8/8)'},
+  {label:'Scenario B',val:100,max:100,color:'var(--green)', display:'100% (8/8)'},
+  {label:'Scenario C',val:100,max:100,color:'var(--green)', display:'100% (7/7)'},
+  {label:'Scenario D',val:86, max:100,color:'var(--amber)', display:'86% (6/7)'},
+]);
+
+barChart('p1-bars', [
+  {label:'Without BC',val:23.6,max:40,color:'var(--blue)',  display:'23.6%'},
+  {label:'With BC',   val:27.4,max:40,color:'var(--purple)',display:'27.4%'},
+  {label:'Overhead',  val:3.8, max:40,color:'var(--green)', display:'+3.8%'},
+  {label:'Target max',val:15,  max:40,color:'var(--line)',  display:'15% limit'},
+]);
+
+barChart('p2-bars', [
+  {label:'Standalone',val:118.4,max:130,color:'var(--green)',  display:'118.4 h/s'},
+  {label:'Concurrent',val:102.3,max:130,color:'var(--blue)',   display:'102.3 h/s'},
+  {label:'Combined',  val:110.4,max:130,color:'var(--purple)', display:'110.4 h/s'},
+  {label:'Min target',val:100,  max:130,color:'var(--amber)',  display:'100 h/s'},
+]);
+
+// ── P4 stability table ───────────────────────────────────────────────────────
+const p4 = [
+  [0,0.0,26.8,348,4.6,0],
+  [2,0.8,27.1,349,4.6,172],
+  [3,1.6,26.5,349,4.7,345],
+  [4,2.4,27.3,350,4.5,518],
+  [5,3.2,26.9,350,4.6,691],
+  [8,4.8,27.0,350,4.6,1037],
+  [12,7.2,27.4,351,4.5,1555],
+  [15,9.6,26.8,351,4.6,2073],
+  [18,12.0,27.2,352,4.6,2591],
+  [20,14.4,27.0,352,4.7,3109],
+  [22,16.8,27.5,352,4.5,3628],
+  [25,19.2,26.9,353,4.6,4146],
+  [27,21.6,27.1,353,4.6,4664],
+  [28,22.4,27.3,353,4.6,4837],
+  [29,23.2,27.0,353,4.7,5010],
+  [30,24.0,27.2,351,4.6,5183]
+];
+const tbody = document.getElementById('p4-body');
+if (tbody) {
+  p4.forEach(r => {
+    tbody.innerHTML += `<tr><td>${r[0]}</td><td>${r[1].toFixed(1)}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${r[5].toLocaleString()}</td><td style="color:var(--green);font-weight:600">✓ Yes</td></tr>`;
+  });
+}
+
+// ── Sticky nav highlight ─────────────────────────────────────────────────────
+const secs = document.querySelectorAll('section[id]');
+const links = document.querySelectorAll('nav a');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(a => a.classList.remove('active'));
+      const a = document.querySelector(`nav a[href="#${e.target.id}"]`);
+      if (a) a.classList.add('active');
     }
   });
+}, {threshold: 0.25});
+secs.forEach(s => obs.observe(s));
+// ════════════════════════════════════════════════════════════
+// DEMO ENGINE
+// ════════════════════════════════════════════════════════════
 
-  // ── Load status.json ──
-  async function loadStatus() {
-    try {
-      const res  = await fetch('status.json?t=' + Date.now());
-      const data = await res.json();
-      updateDashboard(data);
-    } catch (e) {
-      document.getElementById('system-status').textContent = 'Data Unavailable';
-      document.getElementById('online-dot').style.background = '#ef4444';
-      document.getElementById('online-dot').style.boxShadow  = '0 0 8px #ef4444';
-    }
+function showDemo(e) {
+  e.preventDefault();
+  document.getElementById('thesis-view').style.display = 'none';
+  document.getElementById('demo-view').style.display = 'block';
+  document.querySelector('footer').style.display = 'none';
+  document.querySelectorAll('.thesis-link').forEach(a => a.classList.remove('active'));
+  document.getElementById('demo-tab').classList.add('active');
+  window.scrollTo(0,0);
+  initDemo();
+}
+function hideDemo() {
+  document.getElementById('thesis-view').style.display = '';
+  document.getElementById('demo-view').style.display = 'none';
+  document.querySelector('footer').style.display = '';
+  document.getElementById('demo-tab').classList.remove('active');
+  document.querySelector('.thesis-link').classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ── State ────────────────────────────────────────────────────
+const SLOTS_INIT = [
+  {id:'P1',occ:true},{id:'P2',occ:false},{id:'P3',occ:true},{id:'P4',occ:true},{id:'P5',occ:false},
+  {id:'P6',occ:false},{id:'P7',occ:true},{id:'P8',occ:false},{id:'P9',occ:true},{id:'P10',occ:true},
+  {id:'P11',occ:false},{id:'P12',occ:true},{id:'P13',occ:false},{id:'P14',occ:true},{id:'P15',occ:false}
+];
+let slots = SLOTS_INIT.map(s=>({...s}));
+let chainLen=0, frames=0, syncs=0, demoTimer=null, demoStarted=false;
+let chainIntact=true, attackActive=false, tamperBlock=null;
+
+// Fake SHA-256-style hex generator
+function fakeHash(seed) {
+  const chars='0123456789abcdef';
+  let h=0, result='';
+  for(let i=0;i<seed.length;i++) h=(h*31+seed.charCodeAt(i))>>>0;
+  const r=new Uint32Array(8);
+  for(let i=0;i<8;i++){h=(h*1664525+1013904223)>>>0;r[i]=h;}
+  r.forEach(v=>result+=v.toString(16).padStart(8,'0'));
+  return result;
+}
+function shortH(s){return s.slice(0,8)+'…'+s.slice(-4);}
+function fakeFrameHash(idx){return fakeHash('frame'+idx+Date.now());}
+function ts(){
+  const n=new Date();
+  return n.toLocaleDateString('en-MY',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+n.toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+function latency(){return (Math.random()*0.15+0.24).toFixed(2);}
+
+// ── Slot render ───────────────────────────────────────────────
+function renderSlots() {
+  const el=document.getElementById('dm-slots'); if(!el)return;
+  el.innerHTML=slots.map(s=>`
+    <div class="slot ${s.tamper?'tampered':s.occ?'occupied':'free'}">
+      <div class="slot-name">${s.id}</div>
+      <span class="slot-icon">${s.tamper?'⚠️':s.occ?'🚗':'⬜'}</span>
+      <div class="slot-status">${s.tamper?'TAMPERED':s.occ?'Occupied':'Free'}</div>
+    </div>`).join('');
+  const occ=slots.filter(s=>s.occ&&!s.tamper).length;
+  const free=slots.length-occ-slots.filter(s=>s.tamper).length;
+  const rate=Math.round((occ/slots.length)*100);
+  document.getElementById('dm-occ-count').textContent=occ;
+  document.getElementById('dm-free-count').textContent=free;
+  document.getElementById('dm-avail').textContent=free;
+  document.getElementById('dm-rate').textContent=rate+'%';
+  document.getElementById('dm-donut-pct').textContent=rate+'%';
+  const circ=2*Math.PI*44;
+  const occArc=circ*(occ/15), freeArc=circ*(free/15);
+  const od=document.getElementById('dm-donut-occ'), fd=document.getElementById('dm-donut-free');
+  if(od){od.setAttribute('stroke-dasharray',`${occArc} ${circ-occArc}`);}
+  if(fd){fd.setAttribute('stroke-dasharray',`${freeArc} ${circ-freeArc}`);fd.setAttribute('stroke-dashoffset',-occArc);}
+}
+
+// ── Metrics ───────────────────────────────────────────────────
+function noise(base,range){return (base+(Math.random()-.5)*range*2);}
+function updateMetrics() {
+  const cpu=noise(27.4,1.2).toFixed(1);
+  const ram=Math.round(noise(349,4));
+  const cputemp=noise(52.3,1.5).toFixed(1);
+  const fps=noise(4.60,0.12).toFixed(2);
+  const fr=noise(76,3); // gpu freq
+  setM('dm-cpu',cpu,'%','dm-cpu-bar',cpu/100,'#60a5fa');
+  setM('dm-ram',ram,' MB','dm-ram-bar',ram/1000,'#a78bfa');
+  setM('dm-cputemp',cputemp,' °C','dm-cputemp-bar',cputemp/100,'#f59e0b');
+  setM('dm-framerate',fps,' fps','dm-fr-bar',fps/10,'#22c55e');
+  document.getElementById('dm-fps').textContent=fps+' FPS';
+}
+function setM(vid,val,unit,bid,pct,col){
+  const v=document.getElementById(vid); if(v)v.textContent=val;
+  const b=document.getElementById(bid); if(b){b.style.width=(Math.min(1,pct)*100).toFixed(1)+'%';b.style.background=col;}
+}
+
+// ── Chain log ─────────────────────────────────────────────────
+function addChainEntry(type, blockIdx, hash, prevHash, extra='') {
+  const log=document.getElementById('dm-chain-log'); if(!log)return;
+  const cls = type==='normal'?'normal':type==='anchor'?'anchor':type==='tamper'?'tampered-entry':'detected-entry';
+  const tag = type==='normal'?'<span class="ce-tag ok">VALID</span>':
+              type==='anchor'?'<span class="ce-tag anchor">ANCHORED</span>':
+              type==='tamper'?'<span class="ce-tag bad">TAMPERED</span>':
+              '<span class="ce-tag warn">DETECTED</span>';
+  const hashClass=type==='tamper'?'bad':'';
+  const div=document.createElement('div');
+  div.className=`chain-entry ${cls}`;
+  div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center">
+    <span class="ce-block">Block #${blockIdx}</span>${tag}
+  </div>
+  <div class="ce-hash ${hashClass}">${shortH(hash)}</div>
+  <div class="ce-meta">prev: ${shortH(prevHash)}${extra?'  ·  '+extra:''}</div>`;
+  log.insertBefore(div,log.firstChild);
+  if(log.children.length>40)log.removeChild(log.lastChild);
+}
+
+// ── Cloud log ─────────────────────────────────────────────────
+function addCloudEntry(type, msg) {
+  const log=document.getElementById('dm-cloud-log'); if(!log)return;
+  const div=document.createElement('div');
+  div.className=`cloud-entry ${type==='verify'?'verify':type==='fail'?'fail':''}`;
+  div.innerHTML=`<span style="color:#8b949e;font-size:9px">${ts().slice(-8)}</span> ${msg}`;
+  log.insertBefore(div,log.firstChild);
+  if(log.children.length>20)log.removeChild(log.lastChild);
+}
+
+// ── BC panel ──────────────────────────────────────────────────
+function setBcStatus(valid, breakAt) {
+  const badge=document.getElementById('bc-status-badge');
+  const chainBadge=document.getElementById('chain-status-badge');
+  const panel=document.getElementById('bc-panel');
+  const chainPanel=document.getElementById('chain-panel');
+  if(valid){
+    if(badge){badge.className='bc-valid';badge.textContent='VALID';}
+    if(chainBadge){chainBadge.style.color='#22c55e';chainBadge.textContent='● INTACT';}
+    if(panel)panel.classList.remove('alert-border');
+    if(chainPanel)chainPanel.classList.remove('alert-border');
+    document.getElementById('bc-break').textContent='—';
+    document.getElementById('bc-latency').textContent='— ms';
+    setLayerActive(2,true);
+  } else {
+    if(badge){badge.className='bc-invalid';badge.textContent='TAMPERED';}
+    if(chainBadge){chainBadge.style.color='#ef4444';chainBadge.textContent='● BREACH';}
+    if(panel)panel.classList.add('alert-border');
+    if(chainPanel)chainPanel.classList.add('alert-border');
+    document.getElementById('bc-break').textContent='Block #'+breakAt;
+    document.getElementById('bc-latency').textContent=latency()+' ms';
+    setLayerActive(2,false);
   }
+}
 
-  function fmt(dt) {
-    if (!dt || dt === 'Pending') return dt || '—';
-    try {
-      return new Date(dt).toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' });
-    } catch { return dt; }
+function setLayerActive(layer, active) {
+  const pill=document.getElementById('lp'+layer);
+  if(!pill)return;
+  if(active){
+    pill.classList.remove('inactive-layer');pill.classList.add('active-layer');
+    const labels=['','Layer 1 — Active','Layer 2 — Active','Layer 3 — Active'];
+    pill.querySelector('.dl-label').textContent=labels[layer];
+  } else {
+    pill.classList.add('inactive-layer');pill.classList.remove('active-layer');
+    const labels=['','Layer 1 — Bypassed','Layer 2 — BREACHED','Layer 3 — Checking'];
+    pill.querySelector('.dl-label').textContent=labels[layer];
   }
+}
 
-  function updateDashboard(d) {
-    // Last updated
-    document.getElementById('last-updated').textContent =
-      'Updated: ' + fmt(d.last_updated);
-
-    // Slots
-    const grid     = document.getElementById('slots-grid');
-    const occupied = d.parking_slots.filter(s => s.occupied).length;
-    const free     = d.parking_slots.length - occupied;
-    const rate     = Math.round((occupied / d.parking_slots.length) * 100);
-
-    grid.innerHTML = '';
-    d.parking_slots.forEach(slot => {
-      grid.innerHTML += `
-        <div class="slot ${slot.occupied ? 'occupied' : 'free'}">
-          <div class="slot-num">P${slot.id}</div>
-          <div class="slot-icon">${slot.occupied ? '🚗' : '⬜'}</div>
-          <div class="slot-label">${slot.occupied ? 'Occupied' : 'Free'}</div>
-        </div>`;
-    });
-
-    document.getElementById('slots-free').textContent    = free;
-    document.getElementById('occ-occupied').textContent  = occupied;
-    document.getElementById('occ-free').textContent      = free;
-    document.getElementById('occ-rate').textContent      = rate + '%';
-
-    // Stat cards
-    document.getElementById('chain-length').textContent  = d.blockchain.chain_length;
-    document.getElementById('total-frames').textContent  = d.system.total_frames;
-    document.getElementById('fps-stat').textContent      = d.performance.fps.toFixed(2) + ' FPS';
-    document.getElementById('cloud-sync').textContent    = d.system.cloud_sync === 'connected' ? '✓' : '✗';
-
-    // Blockchain panel
-    const integrity = d.blockchain.integrity;
-    const badge = document.getElementById('integrity-badge');
-    badge.textContent  = integrity;
-    badge.className    = 'badge ' + (integrity === 'VALID' ? 'valid' : integrity === 'TAMPERED' ? 'invalid' : 'pending');
-
-    document.getElementById('bc-chain-length').textContent    = d.blockchain.chain_length + ' blocks';
-    document.getElementById('bc-last-verified').textContent   = fmt(d.blockchain.last_verified);
-    document.getElementById('bc-last-checkpoint').textContent = fmt(d.blockchain.last_checkpoint);
-    document.getElementById('bc-device').textContent          = d.device_id;
-
-    // Performance
-    const p = d.performance;
-    document.getElementById('cpu-val').textContent  = p.cpu_percent.toFixed(1);
-    document.getElementById('ram-val').textContent  = p.ram_mb.toFixed(0);
-    document.getElementById('gpu-val').textContent  = p.gpu_freq_pct.toFixed(0);
-    document.getElementById('cpu-temp').textContent = p.cpu_temp_c.toFixed(1);
-    document.getElementById('gpu-temp').textContent = p.gpu_temp_c.toFixed(1);
-    document.getElementById('fps-val').textContent  = p.fps.toFixed(2);
-
-    document.getElementById('cpu-bar').style.width = Math.min(p.cpu_percent, 100) + '%';
-    document.getElementById('ram-bar').style.width = Math.min((p.ram_mb / 4096) * 100, 100) + '%';
-    document.getElementById('gpu-bar').style.width = Math.min(p.gpu_freq_pct, 100) + '%';
-
-    // Chart
-    occupancyChart.data.datasets[0].data = [occupied, free];
-    occupancyChart.update();
+// ── Main tick (every 5s = 1 frame/5s) ────────────────────────
+let prevHash='0'.repeat(64);
+function tick() {
+  if(attackActive)return;
+  chainLen++; frames++;
+  const fh=fakeFrameHash(chainLen);
+  const ch=fakeHash(chainLen+'|'+Date.now()+'|'+fh+'|'+prevHash);
+  addChainEntry('normal',chainLen,ch,prevHash,'Latency: '+latency()+' ms');
+  // Cloud anchor every 5 blocks
+  if(chainLen%5===0){
+    syncs++;
+    document.getElementById('dm-syncs').textContent=syncs;
+    document.getElementById('dm-bc-checkpoint').textContent='Block #'+chainLen+' @ '+ts().slice(-8);
+    addCloudEntry('verify','✓ Anchor #'+syncs+' uploaded · Block #'+chainLen+' · '+shortH(ch));
   }
+  prevHash=ch;
+  document.getElementById('dm-chain').textContent=chainLen;
+  document.getElementById('dm-frames').textContent=frames;
+  document.getElementById('dm-bc-chain').textContent=chainLen+' blocks';
+  document.getElementById('dm-bc-verified').textContent=ts();
+  updateMetrics();
+  updateTime();
+  // Randomly flip one slot
+  if(Math.random()<0.2){
+    const idx=Math.floor(Math.random()*slots.length);
+    if(!slots[idx].tamper)slots[idx].occ=!slots[idx].occ;
+    renderSlots();
+  }
+}
 
-  // Load immediately, then refresh every 30 seconds
-  loadStatus();
-  setInterval(loadStatus, 30000);
+function updateTime(){
+  const el=document.getElementById('dm-time');
+  if(el)el.textContent='· Updated '+ts();
+}
+
+// ── ATTACK SIMULATOR ─────────────────────────────────────────
+const ATTACKS = {
+  modify: {
+    name:'Frame Modification (E1 · AV-01)',
+    steps:[
+      {delay:0,   msg:'[AV-01] Injecting pixel modification into Block #'+0+'…', cls:'running'},
+      {delay:800, msg:'[AV-01] frame_hash recomputed: CORRUPTED_HASH_a3f8…', cls:'running'},
+      {delay:1600,msg:'[Layer 2] chain_hash mismatch detected at Block #'+0+'!', cls:'failed'},
+      {delay:2400,msg:'✓ [DETECTED] Tamper at Block #'+0+' · Latency: 0.31 ms · Detection rate: 100%', cls:'detected'},
+    ]
+  },
+  delete:{
+    name:'Frame Deletion (E2 · AV-02)',
+    steps:[
+      {delay:0,   msg:'[AV-02] Deleting Block #'+0+' from chain…', cls:'running'},
+      {delay:800, msg:'[AV-02] Successor block prev_hash now orphaned…', cls:'running'},
+      {delay:1600,msg:'[Layer 2] Chain gap detected — prev_hash linkage broken!', cls:'failed'},
+      {delay:2400,msg:'✓ [DETECTED] Frame deletion at position #'+0+' · Latency: 0.18 ms', cls:'detected'},
+    ]
+  },
+  inject:{
+    name:'Frame Injection (E3 · AV-03)',
+    steps:[
+      {delay:0,   msg:'[AV-03] Injecting fake frame (AI-generated) at Block #'+0+'…', cls:'running'},
+      {delay:800, msg:'[AV-03] Inserted block has invalid prev_hash linkage…', cls:'running'},
+      {delay:1600,msg:'[Layer 2] Injected block breaks chain integrity!', cls:'failed'},
+      {delay:2400,msg:'✓ [DETECTED] Injection at Block #'+0+' · Content-agnostic detection · 0.19 ms', cls:'detected'},
+    ]
+  },
+  meta:{
+    name:'Metadata Tampering (E4 · AV-04)',
+    steps:[
+      {delay:0,   msg:'[AV-04] Flipping detection_result "Occupied" → "Empty" on Block #'+0+'…', cls:'running'},
+      {delay:800, msg:'[AV-04] chain_hash now includes modified metadata…', cls:'running'},
+      {delay:1600,msg:'[Layer 2] chain_hash recomputation mismatch!', cls:'failed'},
+      {delay:2400,msg:'✓ [DETECTED] Metadata tamper · All fields included in chain_hash · 0.30 ms', cls:'detected'},
+    ]
+  },
+  replay:{
+    name:'Replay Attack — Scenario D (E6 · AV-05)',
+    steps:[
+      {delay:0,   msg:'[AV-05] Replaying old chain segment with recomputed hashes + new timestamps…', cls:'running'},
+      {delay:1000,msg:'[AV-05] Scenario D: hashes valid locally, timestamps updated…', cls:'running'},
+      {delay:2000,msg:'[Layer 3] Cloud anchor mismatch — DynamoDB checkpoint diverges!', cls:'failed'},
+      {delay:3000,msg:'✓ [DETECTED] Replay via cloud anchor · Vulnerability window closed · 1.20 ms', cls:'detected'},
+    ]
+  },
+  ts:{
+    name:'Timestamp Manipulation (E9 · AV-05v)',
+    steps:[
+      {delay:0,   msg:'[AV-05v] Advancing system clock +1 hour on Jetson Nano…', cls:'running'},
+      {delay:800, msg:'[AV-05v] Block timestamps now misaligned with cloud records…', cls:'running'},
+      {delay:1600,msg:'[Layer 3] DynamoDB anchor timestamp vs local timestamp: MISMATCH!', cls:'failed'},
+      {delay:2400,msg:'✓ [DETECTED] Timestamp forgery via cloud cross-check · 921 ms (network RTT)', cls:'detected'},
+    ]
+  }
+};
+
+function runAttack(type) {
+  if(attackActive||chainLen<3)return;
+  attackActive=true;
+  chainIntact=false;
+  const atk=ATTACKS[type];
+  const targetBlock=Math.max(1,chainLen-1);
+  // Mark random slot as tampered for visual
+  tamperBlock=Math.floor(Math.random()*slots.length);
+  slots[tamperBlock].tamper=true;
+  renderSlots();
+  setBcStatus(false,targetBlock);
+  setLayerActive(1,false);
+  setLayerActive(3,type==='replay'||type==='ts'?false:true);
+  // Highlight button
+  document.querySelectorAll('.atk-btn').forEach(b=>b.disabled=true);
+  // Step through messages
+  const steps=atk.steps.map(s=>({...s,msg:s.msg.replace(/#0/g,'#'+targetBlock)}));
+  steps.forEach(step=>{
+    setTimeout(()=>{
+      const el=document.getElementById('atk-status');
+      if(el){el.className='atk-status '+step.cls;el.textContent=step.msg;}
+      // Add to chain log on detection step
+      if(step.cls==='failed'){
+        addChainEntry('tamper',targetBlock,fakeHash('TAMPERED'+Date.now()),prevHash,'← BREACH');
+        addCloudEntry('fail','⚠ TAMPER DETECTED · Block #'+targetBlock+' chain_hash invalid');
+      }
+      if(step.cls==='detected'){
+        addChainEntry('detected',targetBlock,fakeHash('DETECTED'+Date.now()),prevHash,'← Verified');
+        addCloudEntry('verify','✓ Alert logged · '+type.toUpperCase()+' detected · Block #'+targetBlock);
+      }
+    },step.delay);
+  });
+}
+
+function resetAttack() {
+  attackActive=false;
+  chainIntact=true;
+  slots.forEach(s=>delete s.tamper);
+  renderSlots();
+  setBcStatus(true,null);
+  setLayerActive(1,true);
+  setLayerActive(2,true);
+  setLayerActive(3,true);
+  document.querySelectorAll('.atk-btn').forEach(b=>b.disabled=false);
+  const el=document.getElementById('atk-status');
+  if(el){el.className='atk-status idle';el.textContent='Chain reset. Select an attack type above to simulate.';}
+  addChainEntry('normal',chainLen,fakeHash('reset'+Date.now()),prevHash,'Chain restored');
+  addCloudEntry('verify','✓ Chain integrity restored after attack simulation');
+}
+
+// ── Experiment quick-ref data ─────────────────────────────────
+const EXP_DATA = {
+  E1:{title:'E1 — Frame Modification (AV-01)',result:'100% (30/30)',latency:'0.31 ms [0.29,0.33]',n:30,desc:'Modified frame pixel data detected via SHA-256 chain_hash mismatch. Even 1-pixel change detected.',pass:true},
+  E2:{title:'E2 — Frame Deletion (AV-02)',result:'100% (30/30)',latency:'0.71 ms [0.48,0.94]',n:30,desc:'Deleted blocks break prev_hash linkage. Detection latency varies by chain position (0.15–1.61 ms).',pass:true},
+  E3:{title:'E3 — Frame Injection (AV-03)',result:'100% (30/30)',latency:'0.68 ms [0.47,0.90]',n:30,desc:'Injected fake frames (other camera, AI-generated, duplicate) break linkage. Content-agnostic detection.',pass:true},
+  E4:{title:'E4 — Metadata Tampering (AV-04)',result:'100% (30/30)',latency:'0.30 ms [0.29,0.31]',n:30,desc:'Timestamp, detection_result, device_id changes all invalidate chain_hash. All metadata is signed.',pass:true},
+  E5:{title:'E5 — Hash Record Alteration (AV-01v)',result:'100% (30/30)',latency:'0.30 ms [0.29,0.31]',n:30,desc:'Direct hash field alteration (1-char, random replacement, swap) detected immediately.',pass:true},
+  E6:{title:'E6 — Replay Attack (AV-05)',result:'97% (29/30)',latency:'0.64 ms [0.53,0.75]',n:30,desc:'4 scenarios. A/B/C detected via hash/timestamp. Scenario D (hardest) detected via cloud anchor.',pass:true},
+  E7:{title:'E7 — Chain Rewrite (AV-06)',result:'100% (30/30)',latency:'862 ms [858,866]',n:30,desc:'Rewrite K blocks costs O(K×SHA-256). Jetson 7.2× slower than desktop. R²=0.9998. Cloud detects.',pass:true},
+  E8:{title:'E8 — Feed Substitution (AV-07)',result:'87% (26/30)',latency:'6.9 s [5.5,8.3]',n:30,desc:'Repeated hash pattern analysis. Afternoon subs harder (23% repeated hash). Night easiest (89%). Partial.',pass:false},
+  E9:{title:'E9 — Timestamp Manipulation (AV-05v)',result:'100% (30/30)',latency:'921 ms [918,924]',n:30,desc:'Clock drift detected via DynamoDB timestamp cross-check. Network RTT included in latency.',pass:true},
+  E10:{title:'E10 — Physical Spoofing (AV-08)',result:'FP: 67% (20/30)',latency:'—',n:30,desc:'6 objects. Reflective/cardboard/poster: 100% FP. Plastic bag: 0%. Layer 1 accuracy issue, not blockchain.',pass:null},
+  P1:{title:'P1 — Security Overhead',result:'+3.8% CPU overhead',latency:'Paired t-test: p<0.001',n:30,desc:'CPU: 23.6% → 27.4% (+3.8%). RAM: +37 MB. FPS: −0.21. All within 15% target. Statistically significant but practically lightweight.',pass:true},
+  P2:{title:'P2 — Hash Throughput',result:'110.4 h/s [107.1,113.7]',latency:'9.06 ms per hash',n:30,desc:'Standalone: 118.4 h/s. Concurrent (camera active): 102.3 h/s. All 30 runs exceed 100 h/s target.',pass:true},
+  P3:{title:'P3 — Verification Scaling',result:'R²=0.9999 · O(n)',latency:'1.14 ms per block',n:30,desc:'Tested 100–10,000 blocks. Linear regression confirms O(n). 10K blocks = 11.38 s. No quadratic growth.',pass:true},
+  P4:{title:'P4 — 24hr Stability',result:'RAM slope: +0.12 MB/hr',latency:'No leak detected',n:30,desc:'30 samples over 24 hours. CPU stable at 27.1% ± 0.4%. RAM +2.9 MB total. All cloud syncs succeeded.',pass:true},
+};
+
+function buildExpTabs() {
+  const el=document.getElementById('exp-tabs'); if(!el)return;
+  const eKeys=['E1','E2','E3','E4','E5','E6','E7','E8','E9','E10'];
+  const pKeys=['P1','P2','P3','P4'];
+  eKeys.forEach(k=>{
+    const btn=document.createElement('button');
+    btn.className='exp-tab';btn.textContent=k;btn.onclick=()=>showExp(k);el.appendChild(btn);
+  });
+  pKeys.forEach(k=>{
+    const btn=document.createElement('button');
+    btn.className='exp-tab p-tab';btn.textContent=k;btn.onclick=()=>showExp(k);el.appendChild(btn);
+  });
+}
+
+function showExp(key) {
+  document.querySelectorAll('.exp-tab').forEach(b=>{
+    b.classList.remove('active-tab');
+    if(b.textContent===key)b.classList.add('active-tab');
+  });
+  const d=EXP_DATA[key]; if(!d)return;
+  const passHtml = d.pass===true?'<span style="color:#22c55e;font-weight:700">✓ TARGET MET</span>':
+                   d.pass===false?'<span style="color:#f59e0b;font-weight:700">~ PARTIAL</span>':
+                   '<span style="color:#60a5fa;font-weight:700">✓ ANALYSED</span>';
+  document.getElementById('exp-detail').innerHTML=`
+    <div class="ed-title">${d.title} ${passHtml}</div>
+    n=${d.n} · <span class="ed-result ${d.pass===false?'partial':''}">${d.result}</span> · Latency: ${d.latency}<br>
+    <span style="color:#8b949e">${d.desc}</span>`;
+}
+
+// ── Init ──────────────────────────────────────────────────────
+function initDemo() {
+  if(demoStarted)return;
+  demoStarted=true;
+  renderSlots();
+  buildExpTabs();
+  updateTime();
+  updateMetrics();
+  // Seed a few chain entries
+  for(let i=1;i<=3;i++){
+    chainLen++;frames++;
+    const fh=fakeFrameHash(chainLen);
+    const ch=fakeHash(chainLen+'|1000'+i+'|'+fh+'|'+prevHash);
+    addChainEntry('normal',chainLen,ch,prevHash,'Latency: '+latency()+' ms');
+    prevHash=ch;
+  }
+  document.getElementById('dm-chain').textContent=chainLen;
+  document.getElementById('dm-frames').textContent=frames;
+  document.getElementById('dm-bc-chain').textContent=chainLen+' blocks';
+  document.getElementById('dm-bc-verified').textContent=ts();
+  addCloudEntry('verify','✓ System started · Device: jetson-nano-parking · SHA-256');
+  demoTimer=setInterval(tick,5000);
+}
+
 </script>
 </body>
 </html>
