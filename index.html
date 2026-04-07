@@ -238,6 +238,7 @@ footer{border-top:1.5px solid var(--ink);padding:24px 0;margin-top:80px}
   <div class="nav-inner" id="main-nav">
     <a href="#overview" class="active thesis-link">Overview</a>
     <a href="#architecture" class="thesis-link">Architecture</a>
+    <a href="#methodology" class="thesis-link">Methodology</a>
     <a href="#implementation" class="thesis-link">Implementation</a>
     <a href="#security" class="thesis-link">Security</a>
     <a href="#experiments" class="thesis-link">Experiments</a>
@@ -392,6 +393,125 @@ footer{border-top:1.5px solid var(--ink);padding:24px 0;margin-top:80px}
       <strong>Consistency:</strong> Strong read (boto3)<br>
       <strong>Region:</strong> ap-southeast-1 (Singapore)<br>
       <strong>Access:</strong> AWS CLI configured on Jetson · IAM role with DynamoDB PutItem/GetItem</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ METHODOLOGY ══════════════════════════ -->
+<section id="methodology">
+  <div class="sec-label">Methodology</div>
+
+  <!-- Hardware & Software -->
+  <div class="two-col" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-head">Hardware Environment</div>
+      <div class="card-title">NVIDIA Jetson Nano Developer Kit</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px">
+        <tr style="border-bottom:1px solid var(--line)"><td style="padding:6px 0;color:var(--fog);font-size:11px;width:40%">CPU</td><td style="padding:6px 0;font-size:12px">ARM Cortex-A57 · Quad-core · 1.43 GHz</td></tr>
+        <tr style="border-bottom:1px solid var(--line)"><td style="padding:6px 0;color:var(--fog);font-size:11px">GPU</td><td style="padding:6px 0;font-size:12px">NVIDIA Maxwell · 128 CUDA cores</td></tr>
+        <tr style="border-bottom:1px solid var(--line)"><td style="padding:6px 0;color:var(--fog);font-size:11px">RAM</td><td style="padding:6px 0;font-size:12px">4 GB LPDDR4</td></tr>
+        <tr style="border-bottom:1px solid var(--line)"><td style="padding:6px 0;color:var(--fog);font-size:11px">Storage</td><td style="padding:6px 0;font-size:12px">128 GB eMMC</td></tr>
+        <tr style="border-bottom:1px solid var(--line)"><td style="padding:6px 0;color:var(--fog);font-size:11px">OS</td><td style="padding:6px 0;font-size:12px">Ubuntu 18.04 LTS</td></tr>
+        <tr><td style="padding:6px 0;color:var(--fog);font-size:11px">Python</td><td style="padding:6px 0;font-size:12px">3.8</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-head">Software Stack</div>
+      <div class="card-title">Key Libraries</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:8px">
+        <tr style="border-bottom:1px solid var(--line)"><td style="padding:5px 0;color:var(--fog);font-size:11px;width:35%">OpenCV 4.11</td><td style="padding:5px 0;font-size:11px">Frame capture, Canny detection, ROI masking</td></tr>
+        <tr style="border-bottom:1px solid var(--line)"><td style="padding:5px 0;color:var(--fog);font-size:11px">boto3 1.37</td><td style="padding:5px 0;font-size:11px">AWS S3 + DynamoDB integration</td></tr>
+        <tr style="border-bottom:1px solid var(--line)"><td style="padding:5px 0;color:var(--fog);font-size:11px">SciPy 1.10</td><td style="padding:5px 0;font-size:11px">t-test, linear regression, statistics</td></tr>
+        <tr style="border-bottom:1px solid var(--line)"><td style="padding:5px 0;color:var(--fog);font-size:11px">psutil 7.2</td><td style="padding:5px 0;font-size:11px">CPU and RAM monitoring</td></tr>
+        <tr style="border-bottom:1px solid var(--line)"><td style="padding:5px 0;color:var(--fog);font-size:11px">SQLite3</td><td style="padding:5px 0;font-size:11px">Local blockchain persistence (chain.db)</td></tr>
+        <tr><td style="padding:5px 0;color:var(--fog);font-size:11px">hashlib</td><td style="padding:5px 0;font-size:11px">SHA-256 cryptographic hashing</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Layer 1 -->
+  <h2>Layer 1 — Canny Edge Detection</h2>
+  <div class="two-col" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-head">ROI Definition</div>
+      <p style="font-size:13px;margin-bottom:10px">15 parking slots defined manually using <code style="background:var(--paper2);padding:1px 5px;border-radius:2px;font-size:11px">roi_selector.py</code>. Polygon coordinates saved to <code style="background:var(--paper2);padding:1px 5px;border-radius:2px;font-size:11px">rois.json</code>. Updated without modifying detection code whenever camera moves.</p>
+      <div class="formula green">
+        ROI → Binary mask → Grayscale → Canny(100, 200) → edge_count<br>
+        edge_count &gt; 500 → <strong>Occupied</strong> · else → <strong>Empty</strong>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head">Frame Capture Strategy</div>
+      <p style="font-size:13px;margin-bottom:10px">Fixed interval of <strong>5 seconds</strong> — not status-change-only. Eliminates temporal gaps in the hash chain that would allow undetected feed substitution.</p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+        <div style="display:flex;align-items:center;gap:10px;font-size:12px"><span style="background:var(--green-bg);color:var(--green);padding:2px 8px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600">720</span> blocks/hour at 5s interval</div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:12px"><span style="background:var(--blue-bg);color:var(--blue);padding:2px 8px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600">1020×600</span> frame resolution (resized from 2560×1440)</div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:12px"><span style="background:var(--purple-bg);color:var(--purple);padding:2px 8px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600">15</span> parking slots monitored</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Layer 2 -->
+  <h2>Layer 2 — Edge-Only Processing (Privacy-by-Design)</h2>
+  <div class="callout info" style="margin-bottom:20px">
+    <strong>Privacy Guarantee:</strong> Raw video frames are <em>never</em> transmitted to the cloud. Only SHA-256 hash, detection status, timestamp, and block index are uploaded. Even if cloud storage is compromised, no raw footage can be reconstructed.
+  </div>
+  <div class="flow-row" style="margin-bottom:20px">
+    <div class="flow-step"><div class="flow-num">01</div><div class="flow-name">Capture Frame</div><div class="flow-detail">RTSP → resize 1020×600</div></div>
+    <div class="flow-step"><div class="flow-num">02</div><div class="flow-name">JPEG Encode</div><div class="flow-detail">cv2.imencode(".jpg")</div></div>
+    <div class="flow-step"><div class="flow-num">03</div><div class="flow-name">SHA-256 Hash</div><div class="flow-detail">hashlib.sha256(bytes)</div></div>
+    <div class="flow-step"><div class="flow-num">04</div><div class="flow-name">Store Locally</div><div class="flow-detail">JPEG on Jetson eMMC</div></div>
+    <div class="flow-step"><div class="flow-num">05</div><div class="flow-name">Upload Hash Only</div><div class="flow-detail">hash + status → AWS</div></div>
+  </div>
+
+  <!-- Layer 3 -->
+  <h2>Layer 3 — Lightweight Blockchain</h2>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-head">Block Structure</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <tr style="border-bottom:2px solid var(--ink);background:var(--paper2)">
+          <th style="padding:6px 8px;font-size:10px;font-family:'IBM Plex Mono',monospace;letter-spacing:.08em;color:var(--fog)">Field</th>
+          <th style="padding:6px 8px;font-size:10px;font-family:'IBM Plex Mono',monospace;letter-spacing:.08em;color:var(--fog)">Description</th>
+        </tr>
+        <tr style="border-bottom:1px solid var(--line)"><td style="padding:6px 8px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--blue)">block_index</td><td style="padding:6px 8px;font-size:12px">Sequential position in chain</td></tr>
+        <tr style="border-bottom:1px solid var(--line)"><td style="padding:6px 8px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--blue)">timestamp</td><td style="padding:6px 8px;font-size:12px">UTC time (ISO 8601)</td></tr>
+        <tr style="border-bottom:1px solid var(--line)"><td style="padding:6px 8px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--blue)">frame_hash</td><td style="padding:6px 8px;font-size:12px">SHA-256 of JPEG frame</td></tr>
+        <tr style="border-bottom:1px solid var(--line)"><td style="padding:6px 8px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--blue)">detection_result</td><td style="padding:6px 8px;font-size:12px">Parking status per slot</td></tr>
+        <tr style="border-bottom:1px solid var(--line)"><td style="padding:6px 8px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--blue)">previous_hash</td><td style="padding:6px 8px;font-size:12px">Hash of preceding block</td></tr>
+        <tr><td style="padding:6px 8px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--purple)">block_hash</td><td style="padding:6px 8px;font-size:12px">SHA-256 of all above fields</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-head">Chain Construction — Per Frame</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+        <div style="font-size:12px;display:flex;gap:8px;align-items:flex-start"><span style="background:var(--ink);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 7px;border-radius:2px;flex-shrink:0">1</span>Compute frame_hash = SHA-256(JPEG bytes)</div>
+        <div style="font-size:12px;display:flex;gap:8px;align-items:flex-start"><span style="background:var(--ink);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 7px;border-radius:2px;flex-shrink:0">2</span>Retrieve previous_hash from chain tip</div>
+        <div style="font-size:12px;display:flex;gap:8px;align-items:flex-start"><span style="background:var(--ink);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 7px;border-radius:2px;flex-shrink:0">3</span>Compute block_hash = SHA-256(all fields)</div>
+        <div style="font-size:12px;display:flex;gap:8px;align-items:flex-start"><span style="background:var(--ink);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 7px;border-radius:2px;flex-shrink:0">4</span>Append block → persist to SQLite (chain.db)</div>
+        <div style="font-size:12px;display:flex;gap:8px;align-items:flex-start"><span style="background:var(--ink);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 7px;border-radius:2px;flex-shrink:0">5</span>If block_index % 10 == 0 → checkpoint to DynamoDB</div>
+      </div>
+      <div class="formula purple">
+        block_hash = SHA-256(index ‖ timestamp ‖ frame_hash<br>
+        ‖ detection_result ‖ device_id ‖ previous_hash)
+      </div>
+    </div>
+  </div>
+
+  <!-- Experiment Design -->
+  <h2 style="margin-top:32px">Experimental Design</h2>
+  <div class="three-col">
+    <div class="card">
+      <div class="card-head">Tamper Detection (E1–E10)</div>
+      <p style="font-size:13px">10 attack scenarios tested across 6 attack vectors (AV-01 to AV-08). <strong>30 trials each</strong> for CLT compliance. Covers: frame modification, deletion, injection, metadata tampering, hash alteration, replay, chain rewrite, feed substitution, timestamp manipulation, physical spoofing.</p>
+    </div>
+    <div class="card">
+      <div class="card-head">Performance Benchmarks (P1–P4)</div>
+      <p style="font-size:13px"><strong>P1</strong> — Security overhead (CPU/RAM/FPS) · <strong>P2</strong> — Hash throughput (h/s) · <strong>P3</strong> — Verification scaling O(n) · <strong>P4</strong> — 24-hour stability. All with n≥30, 95% CI, paired t-test where applicable.</p>
+    </div>
+    <div class="card">
+      <div class="card-head">Statistical Methods</div>
+      <p style="font-size:13px">Paired t-test (P1), Wilson score CI (detection rates), linear regression with R² (P3, E7, P4), 95% confidence intervals on all metrics. Minimum <strong>420 data points</strong> total across 14 experiments.</p>
     </div>
   </div>
 </section>
