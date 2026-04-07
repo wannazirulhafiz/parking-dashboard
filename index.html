@@ -1266,6 +1266,43 @@ Combined n=30 → inferential tests valid
 .exp-tab:hover{border-color:#60a5fa;color:#60a5fa}
 .exp-tab.active-tab{border-color:#60a5fa;background:#0c1829;color:#60a5fa;font-weight:600}
 .exp-tab.p-tab:hover,.exp-tab.p-tab.active-tab{border-color:#f59e0b;color:#f59e0b;background:#1a1000}
+
+@media(max-width:600px){
+  .dm-body{padding:8px 10px;gap:8px}
+  .dm-header{padding:8px 12px;gap:8px}
+  .dm-title{font-size:12px}
+  .dm-title-sub{display:none}
+  /* Layer bar: stack to 1 col */
+  .dm-layer-bar{grid-template-columns:1fr}
+  .dm-layer-pill{padding:6px 10px}
+  /* Stat row: 2x2 grid */
+  .dm-stat-row{grid-template-columns:1fr 1fr;gap:8px}
+  .dm-stat{padding:10px 12px;gap:8px}
+  .dm-stat-icon{width:30px;height:30px;font-size:14px;flex-shrink:0}
+  .dm-stat-val{font-size:18px}
+  .dm-stat-sub{display:none}
+  /* Main grid: single column */
+  .dm-main{grid-template-columns:1fr;gap:8px}
+  /* Slot grid: 5 cols but smaller */
+  .slot-grid{grid-template-columns:repeat(5,1fr);gap:4px}
+  .slot{padding:6px 3px}
+  .slot-icon{font-size:14px}
+  .slot-name{font-size:8px}
+  .slot-status{font-size:7px}
+  /* Performance grid: 2 col fine */
+  .dm-perf-grid{grid-template-columns:1fr 1fr;gap:6px}
+  .dm-metric{padding:8px}
+  .dm-metric-val{font-size:15px}
+  /* Attack buttons: 1 col */
+  .attack-buttons{grid-template-columns:1fr}
+  /* Chain log shorter */
+  .chain-log{height:160px}
+  .cloud-log{height:110px}
+  /* Exp tabs wrap tighter */
+  .exp-tab{font-size:9px;padding:3px 6px}
+  /* Panel body */
+  .dm-panel-body{padding:10px}
+}
 .exp-detail{background:#0d1117;border:1px solid #21262d;border-radius:5px;padding:10px 12px;font-size:10px;line-height:1.7;color:#8b949e;min-height:80px}
 .exp-detail .ed-title{color:#e2e8f0;font-weight:600;margin-bottom:4px;font-size:11px}
 .exp-detail .ed-result{color:#22c55e;font-weight:600}
