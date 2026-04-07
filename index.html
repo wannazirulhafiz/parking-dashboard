@@ -1512,6 +1512,15 @@ function showDemo(e) {
   window.scrollTo(0,0);
   initDemo();
 }
+
+// Attach hideDemo to all thesis-links so clicking them from demo view works
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.thesis-link').forEach(function(a) {
+    a.addEventListener('click', function() {
+      hideDemo();
+    });
+  });
+});
 function hideDemo() {
   document.getElementById('thesis-view').style.display = '';
   document.getElementById('demo-view').style.display = 'none';
