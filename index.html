@@ -16,12 +16,27 @@
   --red:#b91c1c;--red-bg:#fef2f2;
   --purple:#6d28d9;--purple-bg:#f5f3ff;
 }
+[data-theme="dark"]{
+  --ink:#e2e8f0;--ink2:#cbd5e1;--ink3:#94a3b8;--fog:#64748b;
+  --paper:#0f172a;--paper2:#1e293b;--line:#334155;
+  --green:#4ade80;--green-bg:#052e16;
+  --amber:#fbbf24;--amber-bg:#1c1400;
+  --blue:#60a5fa;--blue-bg:#0c1829;
+  --red:#f87171;--red-bg:#3d0f0f;
+  --purple:#a78bfa;--purple-bg:#1e1040;
+}
 html{scroll-behavior:smooth}
 body{font-family:'IBM Plex Sans',sans-serif;background:var(--paper);color:var(--ink);line-height:1.6}
 .page{max-width:1100px;margin:0 auto;padding:0 32px}
 
 /* NAV */
-nav{position:sticky;top:0;z-index:100;background:rgba(248,249,252,.96);border-bottom:1px solid var(--line);backdrop-filter:blur(8px)}
+nav{position:sticky;top:0;z-index:100;background:rgba(248,249,252,.96);border-bottom:1px solid var(--line);backdrop-filter:blur(8px);transition:background .3s}
+[data-theme="dark"] nav{background:rgba(15,23,42,.96)}
+[data-theme="dark"] body{background:var(--paper);color:var(--ink)}
+[data-theme="dark"] header{border-bottom-color:var(--line)}
+[data-theme="dark"] footer{border-top-color:var(--line)}
+.theme-btn{background:none;border:1px solid var(--line);border-radius:4px;padding:5px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--fog);transition:all .2s;white-space:nowrap}
+.theme-btn:hover{color:var(--ink);border-color:var(--ink)}
 .nav-inner{max-width:1100px;margin:0 auto;padding:0 32px;display:flex;align-items:center;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
 .nav-inner::-webkit-scrollbar{display:none}
 .nav-inner a{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.04em;color:var(--fog);text-decoration:none;padding:14px 16px;border-right:1px solid var(--line);white-space:nowrap;transition:color .15s,background .15s}
@@ -245,6 +260,7 @@ footer{border-top:1.5px solid var(--ink);padding:24px 0;margin-top:80px}
     <a href="#performance" class="thesis-link">Performance</a>
     <a href="#statistics" class="thesis-link">Statistics</a>
     <a href="#" id="demo-tab" onclick="showDemo(event)" style="margin-left:auto;color:#22c55e;border-left:1px solid var(--line);font-weight:600;background:rgba(34,197,94,0.06)">⬡ Live Demo</a>
+    <button class="theme-btn" id="theme-toggle" onclick="toggleTheme()" style="margin:0 12px;flex-shrink:0">☀ Light</button>
   </div>
 </nav>
 
@@ -1567,6 +1583,23 @@ Combined n=30 → inferential tests valid
 </footer>
 
 <script>
+// ── Theme toggle ─────────────────────────────────────────────────────────────
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.getElementById('theme-toggle').textContent = isDark ? '☀ Light' : '☾ Dark';
+  localStorage.setItem('theme', isDark ? 'light' : 'dark');
+}
+// Apply saved theme on load
+(function(){
+  const saved = localStorage.getItem('theme') || 'light';
+  document.documentElement.setAttribute('data-theme', saved);
+  document.addEventListener('DOMContentLoaded', function(){
+    const btn = document.getElementById('theme-toggle');
+    if(btn) btn.textContent = saved === 'dark' ? '☾ Dark' : '☀ Light';
+  });
+})();
+
 // ── Hash chain viz ──────────────────────────────────────────────────────────
 const SAMPLE_HASHES = [
   'a3f8d1c2','e7b29f04','1d6a84c3','9bc05e72','f3417a80',
