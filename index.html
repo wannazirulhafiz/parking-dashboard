@@ -253,6 +253,7 @@ footer{border-top:1.5px solid var(--ink);padding:24px 0;margin-top:80px}
   <div class="nav-inner" id="main-nav">
     <a href="#overview" class="active thesis-link">Overview</a>
     <a href="#architecture" class="thesis-link">Architecture</a>
+    <a href="#flowchart" class="thesis-link">Flowchart</a>
     <a href="#methodology" class="thesis-link">Methodology</a>
     <a href="#implementation" class="thesis-link">Implementation</a>
     <a href="#security" class="thesis-link">Security</a>
@@ -410,6 +411,151 @@ footer{border-top:1.5px solid var(--ink);padding:24px 0;margin-top:80px}
       <strong>Region:</strong> us-east-1 (N. Virginia)<br>
       <strong>Access:</strong> AWS CLI configured on Jetson · IAM role with DynamoDB PutItem/GetItem</p>
     </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ FLOWCHART ════════════════════════════ -->
+<section id="flowchart">
+  <div class="sec-label">System Operation Flowchart</div>
+  <div class="card" style="padding:24px;overflow-x:auto">
+    <svg viewBox="0 0 800 950" xmlns="http://www.w3.org/2000/svg"
+         style="width:100%;max-width:780px;display:block;margin:0 auto;font-family:'IBM Plex Mono',monospace">
+      <defs>
+        <marker id="fc-arr" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto"><polygon points="0 0,8 3.5,0 7" fill="var(--ink3)"/></marker>
+        <marker id="fc-g"   markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto"><polygon points="0 0,8 3.5,0 7" fill="var(--green)"/></marker>
+        <marker id="fc-b"   markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto"><polygon points="0 0,8 3.5,0 7" fill="var(--blue)"/></marker>
+        <marker id="fc-p"   markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto"><polygon points="0 0,8 3.5,0 7" fill="var(--purple)"/></marker>
+        <marker id="fc-r"   markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto"><polygon points="0 0,8 3.5,0 7" fill="var(--red)"/></marker>
+      </defs>
+
+      <!-- LEGEND -->
+      <rect x="558" y="14" width="228" height="94" rx="2" fill="var(--paper2)" stroke="var(--line)" stroke-width="1"/>
+      <text x="570" y="31"  font-size="9"  fill="var(--fog)"  letter-spacing="2">LAYER LEGEND</text>
+      <rect x="570" y="39" width="10" height="10" fill="var(--green)"  rx="1"/>
+      <text x="588" y="49"  font-size="10" fill="var(--ink2)">Layer 1 — Edge Detection</text>
+      <rect x="570" y="57" width="10" height="10" fill="var(--blue)"   rx="1"/>
+      <text x="588" y="67"  font-size="10" fill="var(--ink2)">Layer 2 — Hash Chain</text>
+      <rect x="570" y="75" width="10" height="10" fill="var(--purple)" rx="1"/>
+      <text x="588" y="85"  font-size="10" fill="var(--ink2)">Layer 3 — Cloud Anchor</text>
+
+      <!-- ── START ── -->
+      <rect x="270" y="14" width="200" height="40" rx="20" fill="var(--ink)"/>
+      <text x="370" y="39" text-anchor="middle" font-size="12" font-weight="bold" fill="var(--paper)" letter-spacing="3">START</text>
+      <line x1="370" y1="54" x2="370" y2="82" stroke="var(--ink3)" stroke-width="1.5" marker-end="url(#fc-arr)"/>
+
+      <!-- ── 01 INITIALIZE ── -->
+      <rect x="270" y="84" width="200" height="44" rx="2" fill="var(--paper2)" stroke="var(--line)" stroke-width="1.5"/>
+      <text x="370" y="102" text-anchor="middle" font-size="9"  fill="var(--fog)" letter-spacing="2">01  INITIALIZE</text>
+      <text x="370" y="118" text-anchor="middle" font-size="10" fill="var(--ink3)">Load ROIs · HashChain · AWS config</text>
+      <line x1="370" y1="128" x2="370" y2="156" stroke="var(--green)" stroke-width="1.5" marker-end="url(#fc-g)"/>
+
+      <!-- ══ LAYER 1 BAND ══ -->
+      <rect x="252" y="158" width="236" height="232" rx="2" fill="var(--green-bg)" stroke="var(--green)" stroke-width="1" stroke-dasharray="5,3"/>
+      <text x="262" y="172" font-size="8" fill="var(--green)" letter-spacing="2">LAYER 1 — EDGE DETECTION</text>
+
+      <!-- 02 FRAME CAPTURE -->
+      <rect x="270" y="176" width="200" height="44" rx="2" fill="var(--paper)" stroke="var(--green)" stroke-width="1.5"/>
+      <text x="370" y="194" text-anchor="middle" font-size="9"  fill="var(--fog)" letter-spacing="2">02  RTSP FRAME CAPTURE</text>
+      <text x="370" y="210" text-anchor="middle" font-size="10" fill="var(--ink3)">1 frame / 5 sec · resize 1020×600</text>
+      <line x1="370" y1="220" x2="370" y2="246" stroke="var(--green)" stroke-width="1.5" marker-end="url(#fc-g)"/>
+
+      <!-- 03 CANNY EDGE DETECTION -->
+      <rect x="270" y="248" width="200" height="44" rx="2" fill="var(--paper)" stroke="var(--green)" stroke-width="1.5"/>
+      <text x="370" y="266" text-anchor="middle" font-size="9"  fill="var(--fog)" letter-spacing="2">03  CANNY EDGE DETECTION</text>
+      <text x="370" y="282" text-anchor="middle" font-size="10" fill="var(--ink3)">low=100 · high=200</text>
+      <line x1="370" y1="292" x2="370" y2="318" stroke="var(--green)" stroke-width="1.5" marker-end="url(#fc-g)"/>
+
+      <!-- 04 OCCUPANCY CLASSIFY -->
+      <rect x="270" y="320" width="200" height="44" rx="2" fill="var(--paper)" stroke="var(--green)" stroke-width="1.5"/>
+      <text x="370" y="338" text-anchor="middle" font-size="9"  fill="var(--fog)" letter-spacing="2">04  OCCUPANCY CLASSIFY</text>
+      <text x="370" y="354" text-anchor="middle" font-size="10" fill="var(--ink3)">15 ROI polygons · Occupied / Empty</text>
+      <line x1="370" y1="364" x2="370" y2="408" stroke="var(--blue)" stroke-width="1.5" marker-end="url(#fc-b)"/>
+
+      <!-- ══ LAYER 2 BAND ══ -->
+      <rect x="252" y="410" width="236" height="234" rx="2" fill="var(--blue-bg)" stroke="var(--blue)" stroke-width="1" stroke-dasharray="5,3"/>
+      <text x="262" y="424" font-size="8" fill="var(--blue)" letter-spacing="2">LAYER 2 — HASH CHAIN SECURITY</text>
+
+      <!-- 05 SHA-256 HASH -->
+      <rect x="270" y="428" width="200" height="44" rx="2" fill="var(--paper)" stroke="var(--blue)" stroke-width="1.5"/>
+      <text x="370" y="446" text-anchor="middle" font-size="9"  fill="var(--fog)" letter-spacing="2">05  SHA-256 HASH</text>
+      <text x="370" y="462" text-anchor="middle" font-size="10" fill="var(--ink3)">frame bytes → 64-char hex digest</text>
+      <line x1="370" y1="472" x2="370" y2="498" stroke="var(--blue)" stroke-width="1.5" marker-end="url(#fc-b)"/>
+
+      <!-- 06 CREATE BLOCK -->
+      <rect x="270" y="500" width="200" height="44" rx="2" fill="var(--paper)" stroke="var(--blue)" stroke-width="1.5"/>
+      <text x="370" y="518" text-anchor="middle" font-size="9"  fill="var(--fog)" letter-spacing="2">06  CREATE BLOCK</text>
+      <text x="370" y="534" text-anchor="middle" font-size="10" fill="var(--ink3)">index · ts · frame_hash · prev_hash</text>
+      <line x1="370" y1="544" x2="370" y2="570" stroke="var(--blue)" stroke-width="1.5" marker-end="url(#fc-b)"/>
+
+      <!-- 07 HASHCHAIN APPEND -->
+      <rect x="270" y="572" width="200" height="44" rx="2" fill="var(--paper)" stroke="var(--blue)" stroke-width="1.5"/>
+      <text x="370" y="590" text-anchor="middle" font-size="9"  fill="var(--fog)" letter-spacing="2">07  HASHCHAIN APPEND</text>
+      <text x="370" y="606" text-anchor="middle" font-size="10" fill="var(--ink3)">SQLite · chain_hash = SHA-256(…)</text>
+      <line x1="370" y1="616" x2="370" y2="642" stroke="var(--ink3)" stroke-width="1.5" marker-end="url(#fc-arr)"/>
+
+      <!-- ══ DECISION: CHECKPOINT INTERVAL? ══ -->
+      <!-- center (370,672) half-w=72 half-h=30 → top(370,642) right(442,672) bottom(370,702) left(298,672) -->
+      <polygon points="370,642 442,672 370,702 298,672" fill="var(--paper2)" stroke="var(--ink)" stroke-width="1.5"/>
+      <text x="370" y="668" text-anchor="middle" font-size="10" fill="var(--ink2)">CHECKPOINT</text>
+      <text x="370" y="682" text-anchor="middle" font-size="10" fill="var(--ink2)">INTERVAL?</text>
+
+      <!-- NO → left → down → Wait box left side -->
+      <text x="291" y="669" text-anchor="end" font-size="10" fill="var(--fog)">NO</text>
+      <path d="M298,672 H155 V856 H270" stroke="var(--ink3)" stroke-width="1.5" fill="none" marker-end="url(#fc-arr)"/>
+
+      <!-- YES → right → Layer 3 -->
+      <text x="450" y="669" font-size="10" fill="var(--fog)">YES</text>
+      <line x1="442" y1="672" x2="522" y2="672" stroke="var(--purple)" stroke-width="1.5" marker-end="url(#fc-p)"/>
+
+      <!-- ══ LAYER 3 BAND ══ -->
+      <rect x="524" y="642" width="184" height="142" rx="2" fill="var(--purple-bg)" stroke="var(--purple)" stroke-width="1" stroke-dasharray="5,3"/>
+      <text x="534" y="656" font-size="8" fill="var(--purple)" letter-spacing="2">LAYER 3 — CLOUD ANCHOR</text>
+
+      <!-- 08 DYNAMODB UPLOAD -->
+      <rect x="532" y="660" width="168" height="44" rx="2" fill="var(--paper)" stroke="var(--purple)" stroke-width="1.5"/>
+      <text x="616" y="678" text-anchor="middle" font-size="9"  fill="var(--fog)" letter-spacing="2">08  DYNAMODB UPLOAD</text>
+      <text x="616" y="694" text-anchor="middle" font-size="10" fill="var(--ink3)">chain_hash · anchor_id · ts</text>
+      <line x1="616" y1="704" x2="616" y2="728" stroke="var(--purple)" stroke-width="1.5" marker-end="url(#fc-p)"/>
+
+      <!-- 09 CLOUD VERIFICATION -->
+      <rect x="532" y="730" width="168" height="44" rx="2" fill="var(--paper)" stroke="var(--purple)" stroke-width="1.5"/>
+      <text x="616" y="748" text-anchor="middle" font-size="9"  fill="var(--fog)" letter-spacing="2">09  CLOUD VERIFICATION</text>
+      <text x="616" y="764" text-anchor="middle" font-size="10" fill="var(--ink3)">strong read · compare hashes</text>
+      <line x1="616" y1="774" x2="616" y2="802" stroke="var(--ink3)" stroke-width="1.5" marker-end="url(#fc-arr)"/>
+
+      <!-- ══ DECISION: TAMPER DETECTED? ══ -->
+      <!-- center (616,824) half-w=58 half-h=24 → top(616,800) right(674,824) bottom(616,848) left(558,824) -->
+      <polygon points="616,800 674,824 616,848 558,824" fill="var(--paper2)" stroke="var(--ink)" stroke-width="1.5"/>
+      <text x="616" y="820" text-anchor="middle" font-size="10" fill="var(--ink2)">TAMPER</text>
+      <text x="616" y="834" text-anchor="middle" font-size="10" fill="var(--ink2)">DETECTED?</text>
+
+      <!-- YES → Alert -->
+      <text x="682" y="821" font-size="10" fill="var(--red)">YES</text>
+      <line x1="674" y1="824" x2="706" y2="824" stroke="var(--red)" stroke-width="1.5" marker-end="url(#fc-r)"/>
+      <rect x="708" y="802" width="82" height="44" rx="2" fill="var(--red-bg)" stroke="var(--red)" stroke-width="2"/>
+      <text x="749" y="820" text-anchor="middle" fill="var(--red)" font-size="10" font-weight="bold">TAMPER</text>
+      <text x="749" y="834" text-anchor="middle" fill="var(--red)" font-size="10">ALERT ⚠</text>
+
+      <!-- NO → merge to junction (370,920) -->
+      <text x="622" y="863" font-size="10" fill="var(--fog)">NO</text>
+      <path d="M616,848 V920 H370" stroke="var(--ink3)" stroke-width="1.5" fill="none" marker-end="url(#fc-arr)"/>
+
+      <!-- ══ 10 WAIT INTERVAL ══ -->
+      <rect x="270" y="834" width="200" height="44" rx="2" fill="var(--paper2)" stroke="var(--line)" stroke-width="1.5"/>
+      <text x="370" y="852" text-anchor="middle" font-size="9"  fill="var(--fog)" letter-spacing="2">10  WAIT INTERVAL</text>
+      <text x="370" y="868" text-anchor="middle" font-size="10" fill="var(--ink3)">5s (CAPTURE_INTERVAL_SEC)</text>
+      <!-- Wait → junction -->
+      <line x1="370" y1="878" x2="370" y2="920" stroke="var(--ink3)" stroke-width="1.5"/>
+
+      <!-- JUNCTION DOT -->
+      <circle cx="370" cy="920" r="4" fill="var(--ink3)"/>
+
+      <!-- ══ CONTINUOUS LOOP ══ -->
+      <!-- junction (370,920) → left → up → Frame Capture input -->
+      <path d="M370,920 H110 V196 H270" stroke="var(--ink3)" stroke-width="1.5" fill="none" stroke-dasharray="7,4" marker-end="url(#fc-arr)"/>
+      <text x="97" y="570" text-anchor="middle" fill="var(--fog)" font-size="9" letter-spacing="2" transform="rotate(-90,97,570)">CONTINUOUS LOOP</text>
+
+    </svg>
   </div>
 </section>
 
