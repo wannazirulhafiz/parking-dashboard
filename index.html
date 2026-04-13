@@ -260,6 +260,7 @@ footer{border-top:1.5px solid var(--ink);padding:24px 0;margin-top:80px}
     <a href="#experiments" class="thesis-link">Experiments</a>
     <a href="#performance" class="thesis-link">Performance</a>
     <a href="#statistics" class="thesis-link">Statistics</a>
+    <a href="#scripts" class="thesis-link">Scripts</a>
     <a href="#" id="demo-tab" onclick="showDemo(event)" style="margin-left:auto;color:#22c55e;border-left:1px solid var(--line);font-weight:600;background:rgba(34,197,94,0.06)">⬡ Live Demo</a>
     <button class="theme-btn" id="theme-toggle" onclick="toggleTheme()" style="margin:0 12px;flex-shrink:0">☀ Light</button>
   </div>
@@ -1293,6 +1294,179 @@ Combined n=30 → inferential tests valid
 
   <div class="callout success" style="margin-top:32px">
     <strong>Overall conclusion:</strong> 13 of 14 experiments meet their targets. E8 (feed substitution) achieves 87%, slightly below the 90% target — acknowledged as a limitation of hash-only pattern analysis against high-quality video loops. This is documented as a direction for future work (optical flow or frame entropy analysis as additional signals).
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ SCRIPTS ══════════════════════════════ -->
+<section id="scripts">
+  <div class="sec-label">Scripts — System Codebase</div>
+  <h2>Python Scripts Overview</h2>
+  <p style="font-size:13px;color:var(--ink2);margin-bottom:24px">All scripts located in <code style="background:var(--paper2);padding:1px 6px;border-radius:2px;font-size:11px">~/parking_security/</code> on Jetson Nano and <code style="background:var(--paper2);padding:1px 6px;border-radius:2px;font-size:11px">C:\Users\ASUS\Downloads\parking_system\</code> on ROG laptop.</p>
+
+  <!-- CORE SYSTEM -->
+  <h3 style="margin-bottom:12px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">Core System</h3>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:28px">
+
+    <div class="card" style="padding:16px 20px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <code style="background:var(--green-bg);color:var(--green);padding:2px 8px;border-radius:2px;font-size:11px;font-weight:600;white-space:nowrap">parking_detector.py</code>
+        <span style="font-size:12px;font-weight:600">Full Pipeline — Live Parking Detection</span>
+      </div>
+      <p style="font-size:12px;color:var(--ink2);margin-bottom:6px">Main system script. Connects to RTSP camera → captures frame every 5s → resizes to 1020×600 → runs Canny edge detection on 14 ROI polygons → computes SHA-256 frame hash → adds block to blockchain → uploads frame to S3 → saves status to DynamoDB.</p>
+      <div style="font-size:11px;color:var(--fog);font-family:'IBM Plex Mono',monospace">CAPTURE_INTERVAL_SEC=5 · CHECKPOINT_INTERVAL=10 · HEADLESS=True · auto-reconnect on RTSP drop</div>
+    </div>
+
+    <div class="card" style="padding:16px 20px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <code style="background:var(--green-bg);color:var(--green);padding:2px 8px;border-radius:2px;font-size:11px;font-weight:600;white-space:nowrap">blockchain.py</code>
+        <span style="font-size:12px;font-weight:600">Blockchain Core — HashChain + ChainStorage</span>
+      </div>
+      <p style="font-size:12px;color:var(--ink2);margin-bottom:6px">Defines the Block dataclass, HashChain class, and ChainStorage (SQLite backend). Each block stores: index, timestamp, frame_hash (SHA-256 of JPEG bytes), prev_hash, chain_hash (SHA-256 of all fields combined), and metadata. verify_chain() traverses the full chain in O(n).</p>
+      <div style="font-size:11px;color:var(--fog);font-family:'IBM Plex Mono',monospace">chain_hash = SHA-256(index | timestamp | frame_hash | prev_hash | metadata)</div>
+    </div>
+
+    <div class="card" style="padding:16px 20px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <code style="background:var(--green-bg);color:var(--green);padding:2px 8px;border-radius:2px;font-size:11px;font-weight:600;white-space:nowrap">cloud_anchor.py</code>
+        <span style="font-size:12px;font-weight:600">Cloud Anchor — DynamoDB Checkpoint</span>
+      </div>
+      <p style="font-size:12px;color:var(--ink2);margin-bottom:6px">Uploads blockchain checkpoints to AWS DynamoDB every 10 blocks. Provides independent cloud reference that cannot be tampered locally. verify_against_cloud() cross-checks local chain against DynamoDB records — critical for detecting E7 (chain rewrite) and E6 Scenario D (replay).</p>
+      <div style="font-size:11px;color:var(--fog);font-family:'IBM Plex Mono',monospace">Table: parking_blockchain · Region: us-east-1 · Auto-checkpoint every 10 blocks</div>
+    </div>
+
+    <div class="card" style="padding:16px 20px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <code style="background:var(--green-bg);color:var(--green);padding:2px 8px;border-radius:2px;font-size:11px;font-weight:600;white-space:nowrap">roi_selector.py</code>
+        <span style="font-size:12px;font-weight:600">ROI Drawing Tool</span>
+      </div>
+      <p style="font-size:12px;color:var(--ink2);margin-bottom:6px">Interactive OpenCV tool for drawing parking spot polygons on the camera frame. Left-click adds points, right-click closes polygon, middle-click removes last. Saves polygon coordinates to rois.json. Currently configured with 14 parking spots.</p>
+      <div style="font-size:11px;color:var(--fog);font-family:'IBM Plex Mono',monospace">Output: rois.json · 14 polygons · Frame resized to 1020×600</div>
+    </div>
+
+    <div class="card" style="padding:16px 20px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <code style="background:var(--green-bg);color:var(--green);padding:2px 8px;border-radius:2px;font-size:11px;font-weight:600;white-space:nowrap">performance_monitor.py</code>
+        <span style="font-size:12px;font-weight:600">Performance Monitor</span>
+      </div>
+      <p style="font-size:12px;color:var(--ink2)">Background thread that samples CPU%, RAM (MB), GPU%, FPS, and chain length every 10 seconds. Writes to timestamped CSV in data/. Used by parking_detector.py during live operation and by run_P4_stability.py for the 24-hour stability test.</p>
+    </div>
+  </div>
+
+  <!-- EXPERIMENT SCRIPTS -->
+  <h3 style="margin-bottom:12px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">Experiment Scripts</h3>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:28px">
+
+    <div class="card" style="padding:16px 20px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <code style="background:var(--blue-bg);color:var(--blue);padding:2px 8px;border-radius:2px;font-size:11px;font-weight:600;white-space:nowrap">run_all.py</code>
+        <span style="font-size:12px;font-weight:600">Master Runner — E1–E10, P1–P3</span>
+      </div>
+      <p style="font-size:12px;color:var(--ink2);margin-bottom:6px">Runs all experiment scripts in sequence: run_tamper_experiments.py → run_advanced_experiments.py → run_P1_overhead.py → benchmark_hash.py → benchmark_chain.py. Logs pass/fail for each. Total runtime ~135 minutes on Jetson Nano. P4 excluded (run separately).</p>
+      <div style="font-size:11px;color:var(--fog);font-family:'IBM Plex Mono',monospace">Runtime: 135.7 min · 4/5 passed (P2 had Python 3.8 type hint issue, fixed)</div>
+    </div>
+
+    <div class="card" style="padding:16px 20px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <code style="background:var(--blue-bg);color:var(--blue);padding:2px 8px;border-radius:2px;font-size:11px;font-weight:600;white-space:nowrap">run_tamper_experiments.py</code>
+        <span style="font-size:12px;font-weight:600">E1–E7 Tamper Detection Experiments</span>
+      </div>
+      <p style="font-size:12px;color:var(--ink2)">Runs 7 tamper attack experiments × 30 trials each. Each trial builds a 1000-block synthetic chain (os.urandom(), seed=42), applies an attack, then calls verify_chain() to measure detection. Results saved as individual CSVs with trial, detected flag, latency_ms, and attack-specific fields.</p>
+    </div>
+
+    <div class="card" style="padding:16px 20px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <code style="background:var(--blue-bg);color:var(--blue);padding:2px 8px;border-radius:2px;font-size:11px;font-weight:600;white-space:nowrap">run_advanced_experiments.py</code>
+        <span style="font-size:12px;font-weight:600">E8–E10 Advanced Experiments</span>
+      </div>
+      <p style="font-size:12px;color:var(--ink2)">E8 (feed substitution) — detects repeated frame_hash patterns in chain. E9 (timestamp manipulation) — forward/backward/random clock changes detected via chain_hash invalidation. E10 (physical spoofing) — template CSV for manual data collection with real objects.</p>
+    </div>
+
+    <div class="card" style="padding:16px 20px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <code style="background:var(--blue-bg);color:var(--blue);padding:2px 8px;border-radius:2px;font-size:11px;font-weight:600;white-space:nowrap">tamper_simulator.py</code>
+        <span style="font-size:12px;font-weight:600">Attack Simulator Library</span>
+      </div>
+      <p style="font-size:12px;color:var(--ink2)">Library of attack functions used by the experiment scripts. Provides: build_test_chain(), attack_frame_modification(), attack_frame_deletion(), attack_frame_injection(), attack_metadata_tampering(), attack_replay(), attack_chain_rewrite(). Each returns detected flag and latency_ms.</p>
+    </div>
+
+    <div class="card" style="padding:16px 20px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <code style="background:var(--blue-bg);color:var(--blue);padding:2px 8px;border-radius:2px;font-size:11px;font-weight:600;white-space:nowrap">run_P1_overhead.py</code>
+        <span style="font-size:12px;font-weight:600">P1 — Security Overhead Benchmark</span>
+      </div>
+      <p style="font-size:12px;color:var(--ink2)">30 paired measurements of CPU%, RAM (MB), and FPS with and without blockchain active. Uses paired t-test to determine statistical significance of overhead. Runs on Jetson Nano under controlled conditions.</p>
+    </div>
+
+    <div class="card" style="padding:16px 20px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <code style="background:var(--blue-bg);color:var(--blue);padding:2px 8px;border-radius:2px;font-size:11px;font-weight:600;white-space:nowrap">benchmark_hash.py</code>
+        <span style="font-size:12px;font-weight:600">P2 — Hash Throughput Benchmark</span>
+      </div>
+      <p style="font-size:12px;color:var(--ink2);margin-bottom:6px">Hashes 1,000 random frames × 30 iterations and measures throughput. Result: 12,160.7 hashes/sec (SD=38.2) on Jetson Nano ARM CPU. Highly consistent (CV &lt; 0.4%). Each frame hash takes ~0.082 ms.</p>
+      <div style="font-size:11px;color:var(--fog);font-family:'IBM Plex Mono',monospace">Result: 12,160.7 h/s · SD=38.2 · CI=[12,147, 12,174]</div>
+    </div>
+
+    <div class="card" style="padding:16px 20px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <code style="background:var(--blue-bg);color:var(--blue);padding:2px 8px;border-radius:2px;font-size:11px;font-weight:600;white-space:nowrap">benchmark_chain.py</code>
+        <span style="font-size:12px;font-weight:600">P3 — Verification Scaling Benchmark</span>
+      </div>
+      <p style="font-size:12px;color:var(--ink2);margin-bottom:6px">Measures verify_chain() time for chains of 100, 500, 1,000, 5,000, and 10,000 blocks (6 runs each). Confirms O(n) linear scaling. Results: 4.0ms → 19.5ms → 39.4ms → 203.5ms → 398.0ms.</p>
+      <div style="font-size:11px;color:var(--fog);font-family:'IBM Plex Mono',monospace">10K blocks = 398 ms · 0.040 ms per block · R²≈1.00</div>
+    </div>
+
+    <div class="card" style="padding:16px 20px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <code style="background:var(--blue-bg);color:var(--blue);padding:2px 8px;border-radius:2px;font-size:11px;font-weight:600;white-space:nowrap">run_P4_stability.py</code>
+        <span style="font-size:12px;font-weight:600">P4 — Long-Term Stability Test</span>
+      </div>
+      <p style="font-size:12px;color:var(--ink2)">Runs the parking system continuously and records 30 samples (CPU%, RAM MB, chain length, chain validity, verify_ms) at 10-minute intervals (~5 hours total). Proves the system does not degrade over time — no memory leaks, no performance drift. Linear regression on RAM over time gives the drift slope (MB/hr).</p>
+    </div>
+  </div>
+
+  <!-- UTILITY SCRIPTS -->
+  <h3 style="margin-bottom:12px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">Utility Scripts</h3>
+  <div style="display:flex;flex-direction:column;gap:8px">
+
+    <div class="card" style="padding:16px 20px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <code style="background:var(--amber-bg);color:var(--amber);padding:2px 8px;border-radius:2px;font-size:11px;font-weight:600;white-space:nowrap">generate_report.py</code>
+        <span style="font-size:12px;font-weight:600">Report Generator — Charts + Stats</span>
+      </div>
+      <p style="font-size:12px;color:var(--ink2)">Reads all experiment CSVs, computes statistics (mean, SD, 95% CI, t-test, linear regression), and generates 5 matplotlib PNG charts for the thesis. Outputs figures to reports/ directory.</p>
+    </div>
+
+    <div class="card" style="padding:16px 20px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <code style="background:var(--amber-bg);color:var(--amber);padding:2px 8px;border-radius:2px;font-size:11px;font-weight:600;white-space:nowrap">generate_master_table.py</code>
+        <span style="font-size:12px;font-weight:600">Master Results Table</span>
+      </div>
+      <p style="font-size:12px;color:var(--ink2)">Aggregates all CSVs into a single master results table (CSV + plain text). Ready-to-paste into thesis Chapter 5.</p>
+    </div>
+
+    <div class="card" style="padding:16px 20px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <code style="background:var(--amber-bg);color:var(--amber);padding:2px 8px;border-radius:2px;font-size:11px;font-weight:600;white-space:nowrap">statistical_analysis.py</code>
+        <span style="font-size:12px;font-weight:600">Statistical Analysis Library</span>
+      </div>
+      <p style="font-size:12px;color:var(--ink2)">Provides: analyse_experiment() for per-CSV stats, paired_ttest() for P1 paired comparisons, linear_regression() for P3/P4 trend lines, and trend_analysis() for stability drift detection.</p>
+    </div>
+
+    <div class="card" style="padding:16px 20px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <code style="background:var(--amber-bg);color:var(--amber);padding:2px 8px;border-radius:2px;font-size:11px;font-weight:600;white-space:nowrap">setup_dynamodb.py</code>
+        <span style="font-size:12px;font-weight:600">AWS DynamoDB Setup</span>
+      </div>
+      <p style="font-size:12px;color:var(--ink2)">Creates and verifies DynamoDB tables: parking_blockchain (blockchain checkpoints) and parking_frames (per-frame hash + detection status). AWS account: wannazirulhafiz@student.usm.my · Region: us-east-1.</p>
+    </div>
+
+    <div class="card" style="padding:16px 20px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <code style="background:var(--amber-bg);color:var(--amber);padding:2px 8px;border-radius:2px;font-size:11px;font-weight:600;white-space:nowrap">test_blockchain.py</code>
+        <span style="font-size:12px;font-weight:600">Unit Tests</span>
+      </div>
+      <p style="font-size:12px;color:var(--ink2)">6 unit tests covering: genesis block creation, block addition, chain verification, tamper detection, persistence to SQLite, and cloud anchor connectivity. All 6 tests pass.</p>
+    </div>
   </div>
 </section>
 
