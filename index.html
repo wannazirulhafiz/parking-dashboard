@@ -291,7 +291,7 @@ footer{border-top:1.5px solid var(--ink);padding:24px 0;margin-top:80px}
     <div class="stat-box"><div class="stat-val" style="color:var(--green)">3</div><div class="stat-lbl">Security layers</div></div>
     <div class="stat-box"><div class="stat-val" style="color:var(--blue)">14</div><div class="stat-lbl">Experiments (E1–E10 + P1–P4)</div></div>
     <div class="stat-box"><div class="stat-val" style="color:var(--purple)">420</div><div class="stat-lbl">Min. data points (n≥30 each)</div></div>
-    <div class="stat-box"><div class="stat-val" style="color:var(--amber)">15</div><div class="stat-lbl">Parking spots monitored</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--amber)">14</div><div class="stat-lbl">Parking spots monitored</div></div>
   </div>
   <div class="two-col">
     <div class="card">
@@ -336,7 +336,7 @@ footer{border-top:1.5px solid var(--ink);padding:24px 0;margin-top:80px}
         <ul class="layer-items">
           <li><span class="li-dot" style="background:var(--green)"></span>CCTV RTSP stream (rstp_stream.py)</li>
           <li><span class="li-dot" style="background:var(--green)"></span>Flask web stream (web_stream.py)</li>
-          <li><span class="li-dot" style="background:var(--green)"></span>ROI polygon — 15 spots (rois.json)</li>
+          <li><span class="li-dot" style="background:var(--green)"></span>ROI polygon — 14 spots (rois.json)</li>
           <li><span class="li-dot" style="background:var(--green)"></span>OpenCV Canny edge detection</li>
           <li><span class="li-dot" style="background:var(--green)"></span>Thresholds: low=100, high=200</li>
           <li><span class="li-dot" style="background:var(--green)"></span>Occupancy: Occupied / Empty</li>
@@ -383,7 +383,7 @@ footer{border-top:1.5px solid var(--ink);padding:24px 0;margin-top:80px}
   <div class="flow-row">
     <div class="flow-step"><div class="flow-num">01</div><div class="flow-name">CCTV Camera</div><div class="flow-detail">RTSP://192.168.x.x</div></div>
     <div class="flow-step"><div class="flow-num">02</div><div class="flow-name">Frame Capture</div><div class="flow-detail">1 frame / 5 sec</div></div>
-    <div class="flow-step"><div class="flow-num">03</div><div class="flow-name">Canny Detection</div><div class="flow-detail">15 ROI polygons</div></div>
+    <div class="flow-step"><div class="flow-num">03</div><div class="flow-name">Canny Detection</div><div class="flow-detail">14 ROI polygons</div></div>
     <div class="flow-step"><div class="flow-num">04</div><div class="flow-name">SHA-256 Hash</div><div class="flow-detail">frame bytes → 64-char hex</div></div>
     <div class="flow-step"><div class="flow-num">05</div><div class="flow-name">Block Created</div><div class="flow-detail">chained to prev_hash</div></div>
     <div class="flow-step"><div class="flow-num">06</div><div class="flow-name">Local Storage</div><div class="flow-detail">frame + chain on Jetson</div></div>
@@ -596,7 +596,7 @@ footer{border-top:1.5px solid var(--ink);padding:24px 0;margin-top:80px}
   <div class="two-col" style="margin-bottom:20px">
     <div class="card">
       <div class="card-head">ROI Definition</div>
-      <p style="font-size:13px;margin-bottom:10px">15 parking slots defined manually using <code style="background:var(--paper2);padding:1px 5px;border-radius:2px;font-size:11px">roi_selector.py</code>. Polygon coordinates saved to <code style="background:var(--paper2);padding:1px 5px;border-radius:2px;font-size:11px">rois.json</code>. Updated without modifying detection code whenever camera moves.</p>
+      <p style="font-size:13px;margin-bottom:10px">14 parking slots defined manually using <code style="background:var(--paper2);padding:1px 5px;border-radius:2px;font-size:11px">roi_selector.py</code>. Polygon coordinates saved to <code style="background:var(--paper2);padding:1px 5px;border-radius:2px;font-size:11px">rois.json</code>. Updated without modifying detection code whenever camera moves.</p>
       <div class="formula green">
         ROI → Binary mask → Grayscale → Canny(100, 200) → edge_count<br>
         edge_count &gt; 500 → <strong>Occupied</strong> · else → <strong>Empty</strong>
@@ -608,7 +608,7 @@ footer{border-top:1.5px solid var(--ink);padding:24px 0;margin-top:80px}
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
         <div style="display:flex;align-items:center;gap:10px;font-size:12px"><span style="background:var(--green-bg);color:var(--green);padding:2px 8px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600">720</span> blocks/hour at 5s interval</div>
         <div style="display:flex;align-items:center;gap:10px;font-size:12px"><span style="background:var(--blue-bg);color:var(--blue);padding:2px 8px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600">1020×600</span> frame resolution (resized from 2560×1440)</div>
-        <div style="display:flex;align-items:center;gap:10px;font-size:12px"><span style="background:var(--purple-bg);color:var(--purple);padding:2px 8px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600">15</span> parking slots monitored</div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:12px"><span style="background:var(--purple-bg);color:var(--purple);padding:2px 8px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600">14</span> parking slots monitored</div>
       </div>
     </div>
   </div>
@@ -1492,7 +1492,7 @@ Combined n=30 → inferential tests valid
   <div class="dm-layer-bar">
     <div class="dm-layer-pill l1-pill active-layer" id="lp1">
       <div class="dl-dot" style="background:#22c55e"></div>
-      <div><div class="dl-label" style="color:#4ade80">Layer 1 — Active</div><div class="dl-desc">Edge Detection · Canny · 15 ROI slots</div></div>
+      <div><div class="dl-label" style="color:#4ade80">Layer 1 — Active</div><div class="dl-desc">Edge Detection · Canny · 14 ROI slots</div></div>
     </div>
     <div class="dm-layer-pill l2-pill active-layer" id="lp2">
       <div class="dl-dot" style="background:#60a5fa"></div>
@@ -1511,7 +1511,7 @@ Combined n=30 → inferential tests valid
       <div>
         <div class="dm-stat-label">Available Slots</div>
         <div class="dm-stat-val" style="color:#60a5fa" id="dm-avail">7</div>
-        <div class="dm-stat-sub">of 15 total</div>
+        <div class="dm-stat-sub">of 14 total</div>
       </div>
     </div>
     <div class="dm-stat">
@@ -1927,7 +1927,7 @@ function hideDemo() {
 const SLOTS_INIT = [
   {id:'P1',occ:true},{id:'P2',occ:false},{id:'P3',occ:true},{id:'P4',occ:true},{id:'P5',occ:false},
   {id:'P6',occ:false},{id:'P7',occ:true},{id:'P8',occ:false},{id:'P9',occ:true},{id:'P10',occ:true},
-  {id:'P11',occ:false},{id:'P12',occ:true},{id:'P13',occ:false},{id:'P14',occ:true},{id:'P15',occ:false}
+  {id:'P11',occ:false},{id:'P12',occ:true},{id:'P13',occ:false},{id:'P14',occ:true}
 ];
 let slots = SLOTS_INIT.map(s=>({...s}));
 let chainLen=0, frames=0, syncs=0, demoTimer=null, demoStarted=false;
@@ -1969,7 +1969,7 @@ function renderSlots() {
   document.getElementById('dm-rate').textContent=rate+'%';
   document.getElementById('dm-donut-pct').textContent=rate+'%';
   const circ=2*Math.PI*44;
-  const occArc=circ*(occ/15), freeArc=circ*(free/15);
+  const occArc=circ*(occ/14), freeArc=circ*(free/14);
   const od=document.getElementById('dm-donut-occ'), fd=document.getElementById('dm-donut-free');
   if(od){od.setAttribute('stroke-dasharray',`${occArc} ${circ-occArc}`);}
   if(fd){fd.setAttribute('stroke-dasharray',`${freeArc} ${circ-freeArc}`);fd.setAttribute('stroke-dashoffset',-occArc);}
