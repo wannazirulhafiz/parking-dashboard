@@ -2436,7 +2436,7 @@ function runAttack(type) {
             const el=document.getElementById('atk-status');
             if(el){
               el.className='atk-status detected';
-              el.textContent=`[REAL · Jetson Nano] ${ar.name} — ${ar.status} in ${ar.latency_ms} ms · chain_len=${ar.chain_len}`;
+              el.textContent=`[REAL · Jetson Nano] ${ar.name} — ${ar.status} at block #${ar.target_idx} of ${ar.chain_len} · ${ar.latency_ms} ms`;
             }
             addChainEntry('detected',targetBlock,ar.cmd_url?fakeHash('REAL'+ar.ts):fakeHash('D'+Date.now()),prevHash,`REAL · ${ar.latency_ms}ms`);
             addCloudEntry('verify',`✓ REAL RESULT · ${ar.name} · detected=${ar.detected} · ${ar.latency_ms}ms`);
