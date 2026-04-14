@@ -1880,13 +1880,13 @@ Combined n=30 → inferential tests valid
               <span class="atk-btn-name">Metadata Tamper</span>
               <span class="atk-btn-code">E4 · AV-04</span>
             </button>
-            <button class="atk-btn" onclick="runAttack('replay')" id="atk-replay">
-              <span class="atk-btn-name">Replay Attack</span>
-              <span class="atk-btn-code">E6 · AV-05</span>
+            <button class="atk-btn" onclick="runAttack('hash')" id="atk-hash">
+              <span class="atk-btn-name">Hash Alteration</span>
+              <span class="atk-btn-code">E5 · AV-01v</span>
             </button>
-            <button class="atk-btn" onclick="runAttack('ts')" id="atk-ts">
-              <span class="atk-btn-name">Timestamp Forge</span>
-              <span class="atk-btn-code">E9 · AV-05v</span>
+            <button class="atk-btn" onclick="runAttack('rewrite')" id="atk-rewrite">
+              <span class="atk-btn-name">Chain Rewrite</span>
+              <span class="atk-btn-code">E7 · AV-06</span>
             </button>
           </div>
           <div class="atk-status idle" id="atk-status">Select an attack type above to simulate.</div>
@@ -2352,25 +2352,58 @@ const ATTACKS = {
       {delay:2400,msg:'✓ [DETECTED] Metadata tamper · All fields included in chain_hash · 0.30 ms', cls:'detected'},
     ]
   },
-  replay:{
-    name:'Replay Attack — Scenario D (E6 · AV-05)',
+  hash:{
+    name:'Hash Record Alteration (E5 · AV-01v)',
     steps:[
-      {delay:0,   msg:'[AV-05] Replaying old chain segment with recomputed hashes + new timestamps…', cls:'running'},
-      {delay:1000,msg:'[AV-05] Scenario D: hashes valid locally, timestamps updated…', cls:'running'},
-      {delay:2000,msg:'[Layer 3] Cloud anchor mismatch — DynamoDB checkpoint diverges!', cls:'failed'},
-      {delay:3000,msg:'✓ [DETECTED] Replay via cloud anchor · Vulnerability window closed · 1.20 ms', cls:'detected'},
+      {delay:0,   msg:'[AV-01v] Overwriting block_hash field at Block #'+0+' directly…', cls:'running'},
+      {delay:800, msg:'[AV-01v] block_hash replaced with random 256-bit value…', cls:'running'},
+      {delay:1600,msg:'[Layer 2] chain_hash recomputation fails — stored hash does not match!', cls:'failed'},
+      {delay:2400,msg:'✓ [DETECTED] Hash alteration at Block #'+0+' · Latency: 20.27 ms', cls:'detected'},
     ]
   },
-  ts:{
-    name:'Timestamp Manipulation (E9 · AV-05v)',
+  rewrite:{
+    name:'Chain Rewrite (E7 · AV-06)',
     steps:[
-      {delay:0,   msg:'[AV-05v] Advancing system clock +1 hour on Jetson Nano…', cls:'running'},
-      {delay:800, msg:'[AV-05v] Block timestamps now misaligned with cloud records…', cls:'running'},
-      {delay:1600,msg:'[Layer 3] DynamoDB anchor timestamp vs local timestamp: MISMATCH!', cls:'failed'},
-      {delay:2400,msg:'✓ [DETECTED] Timestamp forgery via cloud cross-check · 921 ms (network RTT)', cls:'detected'},
+      {delay:0,   msg:'[AV-06] Rewriting last 10 blocks — recomputing all hashes…', cls:'running'},
+      {delay:1200,msg:'[AV-06] Local chain now internally valid with new hashes…', cls:'running'},
+      {delay:2400,msg:'[Layer 3] Cloud anchor checkpoint mismatch — DynamoDB has original hash!', cls:'failed'},
+      {delay:3500,msg:'✓ [DETECTED via cloud] Chain rewrite caught by DynamoDB anchor · 13.40 ms rewrite cost', cls:'detected'},
     ]
   }
 };
+
+// Real attack command map
+const REAL_ATTACK_MAP = {
+  'modify':'E1','delete':'E2','inject':'E3','meta':'E4','hash':'E5','rewrite':'E7'
+};
+let _attackCmdUrl = null;
+let _attackPollTimer = null;
+let _lastAttackTs = null;
+
+async function fetchAttackResult() {
+  try {
+    const res = await fetch('https://parking-detection-frames.s3.amazonaws.com/attack_result.json?_='+Date.now(),{cache:'no-store'});
+    if(!res.ok) return null;
+    const d = await res.json();
+    if(d.cmd_url) _attackCmdUrl = d.cmd_url;
+    return d;
+  } catch(e){ return null; }
+}
+
+async function sendRealAttack(code) {
+  if(!_attackCmdUrl) {
+    const ar = await fetchAttackResult();
+    if(!ar||!ar.cmd_url) return false;
+  }
+  try {
+    const res = await fetch(_attackCmdUrl, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({cmd:code, ts: new Date().toISOString()})
+    });
+    return res.ok;
+  } catch(e){ return false; }
+}
 
 function runAttack(type) {
   if(attackActive||chainLen<3)return;
@@ -2378,27 +2411,53 @@ function runAttack(type) {
   chainIntact=false;
   const atk=ATTACKS[type];
   const targetBlock=Math.max(1,chainLen-1);
-  // Mark random slot as tampered for visual
+  const realCode = REAL_ATTACK_MAP[type];
   tamperBlock=Math.floor(Math.random()*slots.length);
   slots[tamperBlock].tamper=true;
   renderSlots();
   setBcStatus(false,targetBlock);
   setLayerActive(1,false);
   setLayerActive(3,type==='replay'||type==='ts'?false:true);
-  // Highlight button
   document.querySelectorAll('.atk-btn').forEach(b=>b.disabled=true);
-  // Step through messages
+
+  // Send real attack command if available
+  if(realCode && _attackCmdUrl) {
+    sendRealAttack(realCode).then(ok=>{
+      if(ok) {
+        addCloudEntry('verify','→ Real attack '+realCode+' sent to Jetson Nano...');
+        // Poll for real result (up to 15s)
+        let polls=0;
+        _attackPollTimer = setInterval(async()=>{
+          polls++;
+          const ar = await fetchAttackResult();
+          if(ar && ar.status==='done' && ar.type===realCode && ar.ts!==_lastAttackTs) {
+            clearInterval(_attackPollTimer);
+            _lastAttackTs = ar.ts;
+            const el=document.getElementById('atk-status');
+            if(el){
+              el.className='atk-status detected';
+              el.textContent=`[REAL · Jetson Nano] ${ar.name} — ${ar.status} in ${ar.latency_ms} ms · chain_len=${ar.chain_len}`;
+            }
+            addChainEntry('detected',targetBlock,ar.cmd_url?fakeHash('REAL'+ar.ts):fakeHash('D'+Date.now()),prevHash,`REAL · ${ar.latency_ms}ms`);
+            addCloudEntry('verify',`✓ REAL RESULT · ${ar.name} · detected=${ar.detected} · ${ar.latency_ms}ms`);
+          }
+          if(polls>5) clearInterval(_attackPollTimer);
+        }, 3000);
+      }
+    });
+  }
+
+  // Run animation regardless
   const steps=atk.steps.map(s=>({...s,msg:s.msg.replace(/#0/g,'#'+targetBlock)}));
   steps.forEach(step=>{
     setTimeout(()=>{
       const el=document.getElementById('atk-status');
-      if(el){el.className='atk-status '+step.cls;el.textContent=step.msg;}
-      // Add to chain log on detection step
+      if(el && !_attackPollTimer){el.className='atk-status '+step.cls;el.textContent=step.msg;}
       if(step.cls==='failed'){
         addChainEntry('tamper',targetBlock,fakeHash('TAMPERED'+Date.now()),prevHash,'← BREACH');
         addCloudEntry('fail','⚠ TAMPER DETECTED · Block #'+targetBlock+' chain_hash invalid');
       }
-      if(step.cls==='detected'){
+      if(step.cls==='detected' && !realCode){
         addChainEntry('detected',targetBlock,fakeHash('DETECTED'+Date.now()),prevHash,'← Verified');
         addCloudEntry('verify','✓ Alert logged · '+type.toUpperCase()+' detected · Block #'+targetBlock);
       }
@@ -2543,6 +2602,13 @@ function initDemo() {
       addCloudEntry('verify','✓ Connected to Jetson Nano · Live parking data active');
     } else {
       addCloudEntry('verify','✓ System started · Device: jetson-nano-parking · SHA-256 (simulation)');
+    }
+  });
+  // Load attack server presigned URL
+  fetchAttackResult().then(ar => {
+    if(ar && ar.cmd_url) {
+      _attackCmdUrl = ar.cmd_url;
+      addCloudEntry('verify','✓ Attack server ready · Real attacks E1–E5, E7 available');
     }
   });
   // Poll real data every 5s; tick() still handles attack animations
