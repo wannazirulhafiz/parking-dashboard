@@ -2182,17 +2182,28 @@ function renderSlots() {
 
 // ── Metrics ───────────────────────────────────────────────────
 function noise(base,range){return (base+(Math.random()-.5)*range*2);}
+let _liveMetrics = null; // filled by fetchRealStatus
 function updateMetrics() {
-  const cpu=noise(27.4,1.2).toFixed(1);
-  const ram=Math.round(noise(349,4));
-  const cputemp=noise(52.3,1.5).toFixed(1);
-  const fps=noise(4.60,0.12).toFixed(2);
-  const fr=noise(76,3); // gpu freq
-  setM('dm-cpu',cpu,'%','dm-cpu-bar',cpu/100,'#60a5fa');
-  setM('dm-ram',ram,' MB','dm-ram-bar',ram/1000,'#a78bfa');
-  setM('dm-cputemp',cputemp,' °C','dm-cputemp-bar',cputemp/100,'#f59e0b');
-  setM('dm-framerate',fps,' fps','dm-fr-bar',fps/10,'#22c55e');
-  document.getElementById('dm-fps').textContent=fps+' FPS';
+  if (_liveMetrics) {
+    const cpu = _liveMetrics.cpu.toFixed(1);
+    const ram = Math.round(_liveMetrics.ram_mb);
+    const fps = _liveMetrics.fps.toFixed(3);
+    setM('dm-cpu',cpu,'%','dm-cpu-bar',cpu/100,'#60a5fa');
+    setM('dm-ram',ram,' MB','dm-ram-bar',ram/500,'#a78bfa');
+    setM('dm-cputemp','—',' °C','dm-cputemp-bar',0,'#f59e0b');
+    setM('dm-framerate',fps,' fps','dm-fr-bar',fps/1,'#22c55e');
+    document.getElementById('dm-fps').textContent=fps+' FPS';
+  } else {
+    const cpu=noise(27.4,1.2).toFixed(1);
+    const ram=Math.round(noise(349,4));
+    const cputemp=noise(52.3,1.5).toFixed(1);
+    const fps=noise(4.60,0.12).toFixed(2);
+    setM('dm-cpu',cpu,'%','dm-cpu-bar',cpu/100,'#60a5fa');
+    setM('dm-ram',ram,' MB','dm-ram-bar',ram/1000,'#a78bfa');
+    setM('dm-cputemp',cputemp,' °C','dm-cputemp-bar',cputemp/100,'#f59e0b');
+    setM('dm-framerate',fps,' fps','dm-fr-bar',fps/10,'#22c55e');
+    document.getElementById('dm-fps').textContent=fps+' FPS';
+  }
 }
 function setM(vid,val,unit,bid,pct,col){
   const v=document.getElementById(vid); if(v)v.textContent=val;
@@ -2477,14 +2488,29 @@ async function fetchRealStatus() {
     document.getElementById('dm-frames').textContent = frames;
     document.getElementById('dm-bc-chain').textContent = chainLen + ' blocks';
     document.getElementById('dm-bc-verified').textContent = d.ts;
-    // Show real-data badge
+    // Update live metrics for updateMetrics()
+    if (d.cpu !== undefined) {
+      _liveMetrics = {cpu: d.cpu, ram_mb: d.ram_mb, fps: d.fps};
+      updateMetrics();
+    }
+    // Show real-data badge + populate chain log with real blocks
     if (!usingRealData) {
       usingRealData = true;
       addCloudEntry('verify', '✓ LIVE DATA from Jetson Nano · ' + d.occupied + ' occupied · ' + d.free + ' free · hash ' + d.last_hash);
       const badge = document.getElementById('live-data-badge');
       if (badge) badge.style.display = 'flex';
+      // Seed chain log with real recent blocks
+      if (d.recent_blocks && d.recent_blocks.length) {
+        d.recent_blocks.forEach(b => {
+          addChainEntry('normal', b.idx, b.hash, b.prev, 'Real block · ' + b.ts.slice(11,19));
+        });
+      }
     } else {
-      addChainEntry('normal', chainLen, d.last_hash, '…', d.occupied + ' occupied · ' + d.free + ' free');
+      // Add latest real block to chain log
+      if (d.recent_blocks && d.recent_blocks.length) {
+        const b = d.recent_blocks[d.recent_blocks.length - 1];
+        addChainEntry('normal', b.idx, b.hash, b.prev, d.occupied + ' occupied · ' + d.free + ' free');
+      }
     }
     return true;
   } catch(e) {
