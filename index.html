@@ -1672,6 +1672,7 @@ Combined n=30 → inferential tests valid
   </div>
   <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
     <div class="dm-badge"><div class="dm-badge-dot"></div>System Online<span class="dm-updated" id="dm-time"></span></div>
+    <div id="live-data-badge" style="display:none;align-items:center;gap:5px;font-size:11px;color:#f59e0b;background:#1c1400;border:1px solid #d97706;border-radius:4px;padding:3px 8px"><span style="width:6px;height:6px;border-radius:50%;background:#f59e0b;animation:blink 1.8s infinite;flex-shrink:0;display:inline-block"></span>LIVE · Jetson Nano</div>
     <button class="dm-back" onclick="hideDemo()">← Back to Thesis</button>
   </div>
 </div>
@@ -2458,6 +2459,39 @@ function showExp(key) {
 }
 
 // ── Init ──────────────────────────────────────────────────────
+const STATUS_URL = 'https://parking-detection-frames.s3.amazonaws.com/status.json';
+let usingRealData = false;
+
+async function fetchRealStatus() {
+  try {
+    const res = await fetch(STATUS_URL + '?_=' + Date.now(), {cache:'no-store'});
+    if (!res.ok) throw new Error(res.status);
+    const d = await res.json();
+    // Update slots from real data
+    slots = d.slots.map(s => ({id: s.id, occ: s.occ}));
+    renderSlots();
+    // Update chain stats
+    chainLen = d.chain_len;
+    frames = d.chain_len;
+    document.getElementById('dm-chain').textContent = chainLen;
+    document.getElementById('dm-frames').textContent = frames;
+    document.getElementById('dm-bc-chain').textContent = chainLen + ' blocks';
+    document.getElementById('dm-bc-verified').textContent = d.ts;
+    // Show real-data badge
+    if (!usingRealData) {
+      usingRealData = true;
+      addCloudEntry('verify', '✓ LIVE DATA from Jetson Nano · ' + d.occupied + ' occupied · ' + d.free + ' free · hash ' + d.last_hash);
+      const badge = document.getElementById('live-data-badge');
+      if (badge) badge.style.display = 'flex';
+    } else {
+      addChainEntry('normal', chainLen, d.last_hash, '…', d.occupied + ' occupied · ' + d.free + ' free');
+    }
+    return true;
+  } catch(e) {
+    return false;
+  }
+}
+
 function initDemo() {
   if(demoStarted)return;
   demoStarted=true;
@@ -2477,7 +2511,16 @@ function initDemo() {
   document.getElementById('dm-frames').textContent=frames;
   document.getElementById('dm-bc-chain').textContent=chainLen+' blocks';
   document.getElementById('dm-bc-verified').textContent=ts();
-  addCloudEntry('verify','✓ System started · Device: jetson-nano-parking · SHA-256');
+  // Try real data first, fall back to simulation
+  fetchRealStatus().then(ok => {
+    if (ok) {
+      addCloudEntry('verify','✓ Connected to Jetson Nano · Live parking data active');
+    } else {
+      addCloudEntry('verify','✓ System started · Device: jetson-nano-parking · SHA-256 (simulation)');
+    }
+  });
+  // Poll real data every 5s; tick() still handles attack animations
+  setInterval(() => { if(!attackActive) fetchRealStatus(); }, 5000);
   demoTimer=setInterval(tick,5000);
 }
 
